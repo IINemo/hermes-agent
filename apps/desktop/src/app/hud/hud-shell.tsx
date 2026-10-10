@@ -17,6 +17,7 @@ import { useHudGoto, useReportHudSession } from './handoff'
 import { hudResizeDirections, useHudResizeHandle } from './resize-handle'
 import { useHudThreadFocus } from './thread-focus'
 import { useHudTranscriptBand } from './transcript-band'
+import { HudWindowVisibility } from './window-visibility'
 
 /** How long the transcript lingers at its glanceable opacity — after a turn
  *  lands, or after you let go of the composer — before it goes. This is the ONLY
@@ -348,7 +349,9 @@ export function HudShell() {
           it paints behind the transcript. */}
       <div aria-hidden data-hud-glass />
 
-      <WiredPane part="chatRoutes" />
+      <HudWindowVisibility>
+        <WiredPane part="chatRoutes" />
+      </HudWindowVisibility>
 
       {/* CanvasTTY-style resize frame. Windows/macOS/X11 get every edge and
           corner; native Wayland gets the right/bottom handles it can honour

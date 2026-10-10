@@ -183,6 +183,34 @@ native macOS fixture also confirmed actual OS shortcut registration. Automated
 cross-app keypress testing was inconclusive, so a manual cross-app toggle test
 was not claimed as verified.
 
+## Popup follow-up: modifier gesture and reading position
+
+The optional **⌥⌘** modifier gesture was disabled in **Settings → Keyboard
+Shortcuts → HUD gesture → Tap to toggle HUD**. The saved desktop preference is
+`hud-modifier.json` with `{"enabled":false}`. It is a user setting and survives
+the app replacement; the configurable **⌘⇧H** shortcut remains available.
+
+The HUD now passes native window visibility to the existing transcript scroll
+restoration. Hiding retains the mounted chat and saves its visible reading
+position; reopening restores either the latest-message view or the offset into
+older messages. Hidden browser layout changes cannot overwrite that position.
+The existing native window is reused, retaining its screen coordinates and size.
+
+The follow-up starts from commit `af6813af` plus the local visibility changes.
+Two regression cases fail with native visibility ignored and pass with it wired
+in. All 97 tests across 18 focused popup and scroll test files passed.
+
+This follow-up was built at `2026-10-10T16:02:27.539Z` and installed over
+`/Applications/Hermes.app`. The preceding popup build is saved at
+`.cache/hermes-app-backups/20261010T160337Z/Hermes.app`. The replacement preserved
+all 14 desktop JSON settings files byte for byte, including the disabled gesture.
+TypeScript, desktop lint (no errors), all 11 repository checks, the build, and
+strict installed-app signature verification passed.
+After launch, the UI showed **Backend ready**. A native close/reopen retained
+the same HUD conversation, and the installed renderer archive matched the
+packaged archive. Reading-position restoration was verified by the regression
+tests; a visual scroll comparison in the native fading HUD was inconclusive.
+
 The temporary logs and receipt used were:
 
 - `/private/tmp/hermes-popup-build-delivery.log`
