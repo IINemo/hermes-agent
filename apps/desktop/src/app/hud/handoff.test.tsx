@@ -13,16 +13,20 @@ vi.mock('../open-session', () => ({ openSession: vi.fn() }))
 vi.mock('@/store/composer', () => ({ reloadPersistedDrafts: vi.fn(), requestComposerDraftSync: vi.fn() }))
 vi.mock('@/store/session-states', () => ({ focusOpenSession: () => 'main', sessionTileDelegate: () => null }))
 
+import { reloadPersistedDrafts } from '@/store/composer'
+
+import { openSession } from '../open-session'
+
 import { useHudHandoff } from './handoff'
 
-type HudChanged = (state: { open: boolean; sessionId: null | string; retained?: boolean }) => void
+type HudChanged = Parameters<NonNullable<Window['hermesDesktop']['hud']>['onChanged']>[0]
 
 const desktopWindow = window as unknown as { hermesDesktop?: Window['hermesDesktop'] }
 const initialHermesDesktop = desktopWindow.hermesDesktop
 let emitHudChanged: HudChanged | null = null
 
 beforeEach(() => {
-  requestComposerFocus.mockClear()
+  vi.clearAllMocks()
   emitHudChanged = null
   desktopWindow.hermesDesktop = {
     hud: {
@@ -69,5 +73,16 @@ it('leaves main-window focus and session routing alone when the popup is only hi
   expect(requestComposerFocus).not.toHaveBeenCalled()
   expect(resumeSession).not.toHaveBeenCalled()
   expect(navigate).not.toHaveBeenCalled()
+  unmount()
+})
+
+it('hands the retained popup conversation and draft back to main on explicit exit', () => {
+  const navigate = vi.fn()
+  const { unmount } = renderHook(() => useHudHandoff({ navigate, resumeSession: vi.fn() }))
+
+  emitHudChanged?.({ open: false, sessionId: 'popup-session', retained: true, returnToMain: true })
+  expect(reloadPersistedDrafts).toHaveBeenCalledOnce()
+  expect(requestComposerFocus).toHaveBeenCalledOnce()
+  expect(openSession).toHaveBeenCalledWith('popup-session', navigate)
   unmount()
 })

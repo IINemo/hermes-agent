@@ -1,6 +1,6 @@
 import { expect, it, vi } from 'vitest'
 
-import { createHudPopup } from './hud-popup'
+import { createHudPopup, dismissHudPopup } from './hud-popup'
 
 it('toggles the popup alone and does not reveal a cold window dismissed before first paint', () => {
   const win = { show: vi.fn(), focus: vi.fn() }
@@ -30,4 +30,20 @@ it('cannot summon a window during shutdown', () => {
   popup.toggle()
   expect(open).not.toHaveBeenCalled()
   expect(dismiss).not.toHaveBeenCalled()
+})
+
+it('retains the native popup on dismiss and clears a destroyed handle', () => {
+  const win = { hide: vi.fn(), isDestroyed: vi.fn(() => false) }
+  const deps = { clearWindow: vi.fn(), releaseShortcut: vi.fn(), broadcast: vi.fn() }
+  dismissHudPopup(win, deps)
+  expect(win.hide).toHaveBeenCalledOnce()
+  expect(deps.clearWindow).not.toHaveBeenCalled()
+  expect(deps.broadcast).toHaveBeenLastCalledWith(false)
+  expect(deps.releaseShortcut).toHaveBeenCalledOnce()
+
+  win.isDestroyed.mockReturnValue(true)
+  dismissHudPopup(win, deps)
+  expect(win.hide).toHaveBeenCalledOnce()
+  expect(deps.clearWindow).toHaveBeenCalledOnce()
+  expect(deps.releaseShortcut).toHaveBeenCalledTimes(2)
 })

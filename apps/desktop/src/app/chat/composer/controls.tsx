@@ -8,7 +8,7 @@ import { triggerHaptic } from '@/lib/haptics'
 import { Ear, EarOff, iconSize, Layers3, Loader2, Square } from '@/lib/icons'
 import { cn } from '@/lib/utils'
 import { recordAction } from '@/store/desktop-metrics'
-import { $hudMode, closeHud, resetHudLayout } from '@/store/hud'
+import { $hudMode, exitHud, resetHudLayout } from '@/store/hud'
 import { $wakeWord, toggleWakeWord } from '@/store/wake-word'
 
 import { ACTIVE_ICON_BTN, GHOST_ICON_BTN, PRIMARY_ICON_BTN } from './control-classes'
@@ -202,7 +202,7 @@ function HudWindowButtons() {
         <Button
           aria-label={t.titlebar.exitHud}
           className={cn(GHOST_ICON_BTN, 'p-0')}
-          onClick={closeHud}
+          onClick={exitHud}
           size="icon"
           type="button"
           variant="ghost"

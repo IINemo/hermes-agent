@@ -329,7 +329,7 @@ import { applyHudResetBounds, defaultHudBounds } from './hud-geometry'
 import { registerHudIpc } from './hud-ipc'
 import { installHudModifierTap } from './hud-modifier'
 import { applyHudElectronOverlay, promoteHudOverlay } from './hud-overlay'
-import { createHudPopup } from './hud-popup'
+import { createHudPopup, dismissHudPopup } from './hud-popup'
 import { installHudShortcut } from './hud-shortcut'
 import { snapHudBounds } from './hud-snap'
 import { createHudSnapShortcut } from './hud-snap-shortcut'
@@ -14556,9 +14556,14 @@ function hudUrl(sessionId, profile) {
 // the truth even when the HUD is closed from its own side (⌘W / its exit row).
 // Carries the HUD's session so the app window can re-home onto it on the way
 // out (see hudSessionId).
-function broadcastHudState(open) {
+function broadcastHudState(open, returnToMain = false) {
   hudPopup.changed(open)
-  const payload = { open, sessionId: hudSessionId, retained: Boolean(hudWindow && !hudWindow.isDestroyed()) }
+  const payload = {
+    open,
+    sessionId: hudSessionId,
+    retained: Boolean(hudWindow && !hudWindow.isDestroyed()),
+    returnToMain
+  }
 
   for (const win of BrowserWindow.getAllWindows()) {
     if (!win.isDestroyed()) {
@@ -14696,12 +14701,8 @@ function spawnHudWindow(sessionId, profile) {
   return win
 }
 
-// Take the HUD window down. The 'closed' handler stays attached so ONE path
-// owns the teardown (snap shortcut, close broadcast)
-// whether the window went via the exit button, ⌘W, a profile respawn, or the
-// grace deadline — detaching it before close() was how a renderer that never
-// answered the close left an always-on-top HUD nobody could dismiss and no
-// broadcast to correct the toggles.
+// Destruction is for failed renderers and profile respawns. Keep 'closed'
+// attached so the grace deadline also releases the shortcut and toggles.
 function destroyHudWindow(win: BrowserWindow) {
   if (hudWindow === win) {
     hudWindow = null
@@ -14761,21 +14762,13 @@ function openHudWindow(sessionId, profile) {
 }
 
 function closeHudWindow() {
-  const win = hudWindow
-
-  if (win && !win.isDestroyed()) {
-    win.hide()
-    hudSnapShortcut.dispose()
-    broadcastHudState(false)
-
-    return
-  }
-
-  // No live HUD (a renderer that died, a toggle racing the close): still
-  // release what an open HUD holds, so the toggles read right.
-  hudWindow = null
-  hudSnapShortcut.dispose()
-  broadcastHudState(false)
+  dismissHudPopup(hudWindow, {
+    clearWindow: () => {
+      hudWindow = null
+    },
+    releaseShortcut: () => hudSnapShortcut.dispose(),
+    broadcast: broadcastHudState
+  })
 }
 
 const hudPopup = createHudPopup({
@@ -15844,6 +15837,10 @@ const hudIpc = registerHudIpc({
   getHudWindow: () => hudWindow,
   openHudWindow,
   closeHudWindow,
+  returnToMain: () => {
+    ensureMainWindow(mainWindow, { isReady: app.isReady(), createWindow, focusWindow: activateWindow })
+    broadcastHudState(false, true)
+  },
   resetHudLayout: resetHudWindowLayout,
   setHudSessionId: value => {
     hudSessionId = value

@@ -239,6 +239,38 @@ Native keyboard/drag automation was inconclusive; selection handling is covered
 by the regression tests. The installed renderer archive matched the packaged
 archive, and the saved disabled modifier gesture and global shortcut were retained.
 
+## Popup follow-up: Exit HUD returns to the main window
+
+The composer’s **Exit HUD mode** button now sends an explicit return-to-main
+request. Electron hides the retained popup, restores or creates the primary
+window, and signals the existing conversation/draft handoff. The renderer
+flushes its draft before requesting the switch. A retained-window dismiss
+alone continues to leave the main window's focus and session routing alone.
+
+The configurable global shortcut still only shows or hides the popup. Native
+close / **⌘W** also remains a dismiss. The HUD window stays alive, preserving
+its geometry and reading position for the next summon. No shortcut preference,
+modifier-gesture setting, or displayed button label changed.
+
+The button and close-IPC regression tests failed on `24dc409b` before this
+change. Tests also cover returning the conversation and draft to main while
+retaining the popup, and preserving plain-dismiss behavior.
+
+All 73 tests across 19 focused popup, composer, handoff, shortcut, and window
+lifecycle files passed. TypeScript, desktop lint (no errors), all 11 repository
+checks, and the build passed. The build timestamp is `2026-10-10T16:42:41.971Z`;
+it replaced `/Applications/Hermes.app` after strict signature verification.
+The preceding copying fix is backed up at
+`.cache/hermes-app-backups/20261010T164442Z/Hermes.app`. All 14 desktop JSON
+settings files were preserved byte for byte, and the installed renderer
+archive matched the packaged archive.
+
+After relaunch, the desktop log reported the existing backend ready. Clicking
+**Exit HUD mode** in the installed popup returned to the primary **Hermes**
+window on the same conversation URL. Keyboard automation was inconclusive;
+unchanged hotkey dismissal is covered by the focused regression tests, and
+the saved **⌘⇧H** shortcut and disabled **⌥⌘** gesture were retained.
+
 The temporary logs and receipt used were:
 
 - `/private/tmp/hermes-popup-build-delivery.log`

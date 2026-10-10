@@ -73,7 +73,7 @@ export function openHud(sessionId?: null | string): void {
 }
 
 /** Dismiss the popup from either window, preserving its live chat and draft. */
-export function closeHud(): void {
+export function closeHud(options?: { returnToMain: boolean }): void {
   const api = window.hermesDesktop?.hud
 
   if (!api) {
@@ -82,7 +82,13 @@ export function closeHud(): void {
 
   $hudActive.set(false)
   $hudSession.set(null)
-  void api.close()
+  void (options ? api.close(options) : api.close())
+}
+
+/** Exit HUD mode explicitly, handing the current chat and draft back to main. */
+export function exitHud(): void {
+  requestComposerDraftSync('flush')
+  closeHud({ returnToMain: true })
 }
 
 export const toggleHud = (sessionId?: null | string) => ($hudActive.get() ? closeHud() : openHud(sessionId))
@@ -106,11 +112,11 @@ export const reportHudSession = (sessionId: null | string): void => window.herme
 export function watchHudState(onClosed?: (sessionId: null | string) => void): () => void {
   const offShortcut = initHudShortcut()
 
-  const off = window.hermesDesktop?.hud?.onChanged?.(({ open, sessionId, retained }) => {
+  const off = window.hermesDesktop?.hud?.onChanged?.(({ open, sessionId, retained, returnToMain }) => {
     $hudActive.set(open)
     $hudSession.set(open ? sessionId : null)
 
-    if (!open && !retained) {
+    if (!open && (!retained || returnToMain)) {
       onClosed?.(sessionId)
     }
   })

@@ -98,6 +98,26 @@ describe('HUD mode', () => {
     expect(screen.queryByLabelText('Read replies aloud')).toBeNull()
   })
 
+  it('returns to the main window through Exit HUD while the hotkey still only dismisses', async () => {
+    const originalDesktop = window.hermesDesktop
+    const close = vi.fn().mockResolvedValue({ ok: true })
+    window.hermesDesktop = { hud: { close } } as unknown as Window['hermesDesktop']
+
+    try {
+      $hudMode.set(true)
+      renderControls()
+      fireEvent.click(screen.getByLabelText('Exit HUD mode'))
+      expect(close).toHaveBeenLastCalledWith({ returnToMain: true })
+
+      const { $hudActive, toggleHud } = await import('@/store/hud')
+      $hudActive.set(true)
+      toggleHud()
+      expect(close).toHaveBeenLastCalledWith()
+    } finally {
+      window.hermesDesktop = originalDesktop
+    }
+  })
+
   // A collapsed menu that looked idle while the mic was open would be a worse
   // trade than the space it saves, so the trigger reports the live state.
   it('reports a live voice state on the collapsed trigger', () => {

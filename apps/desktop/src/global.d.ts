@@ -163,7 +163,7 @@ declare global {
           workspaceTransfer: boolean
         }
         open: (request?: { sessionId?: null | string; profile?: null | string }) => Promise<{ ok: boolean }>
-        close: () => Promise<{ ok: boolean }>
+        close: (options?: { returnToMain: boolean }) => Promise<{ ok: boolean }>
         setIgnoreMouse: (ignore: boolean) => void
         beginMove: () => void
         endMove: () => void
@@ -175,7 +175,12 @@ declare global {
         setSession: (sessionId: null | string) => void
         onGoto: (callback: (sessionId: string) => void) => () => void
         onChanged: (
-          callback: (state: { open: boolean; sessionId: null | string; retained?: boolean }) => void
+          callback: (state: {
+            open: boolean
+            sessionId: null | string
+            retained?: boolean
+            returnToMain?: boolean
+          }) => void
         ) => () => void
         onCursor: (callback: (point: { x: number; y: number } | null) => void) => () => void
         onGameOverlay: (callback: (state: { active: boolean; app: string }) => void) => () => void

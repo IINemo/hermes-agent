@@ -20,6 +20,7 @@ export interface HudIpcDeps {
   getHudWindow: () => BrowserWindow | null
   openHudWindow: (sessionId: null | string, profile: null | string) => void
   closeHudWindow: () => void
+  returnToMain: () => void
   resetHudLayout: () => boolean
   setHudSessionId: (sessionId: null | string) => void
 }
@@ -30,6 +31,7 @@ export function registerHudIpc({
   getHudWindow,
   openHudWindow,
   closeHudWindow,
+  returnToMain,
   resetHudLayout,
   setHudSessionId
 }: HudIpcDeps) {
@@ -291,8 +293,12 @@ export function registerHudIpc({
     }
   })
 
-  ipcMain.handle('hermes:hud:close', async () => {
+  ipcMain.handle('hermes:hud:close', async (_event, options) => {
     closeHudWindow()
+
+    if (options?.returnToMain === true) {
+      returnToMain()
+    }
 
     return { ok: true }
   })

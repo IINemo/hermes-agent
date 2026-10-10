@@ -132,7 +132,7 @@ contextBridge.exposeInMainWorld('hermesDesktop', {
       workspaceTransfer: hudWindowing?.workspaceTransfer === true
     },
     open: request => ipcRenderer.invoke('hermes:hud:open', request),
-    close: () => ipcRenderer.invoke('hermes:hud:close'),
+    close: (options?: { returnToMain: boolean }) => ipcRenderer.invoke('hermes:hud:close', options),
     setIgnoreMouse: ignore => ipcRenderer.send('hermes:hud:ignore-mouse', ignore),
     beginMove: () => ipcRenderer.send('hermes:hud:begin-move'),
     endMove: () => ipcRenderer.send('hermes:hud:end-move'),
