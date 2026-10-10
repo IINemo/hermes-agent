@@ -60,10 +60,27 @@ export function useHudHandoff({ navigate, resumeSession }: HudHandoffParams): vo
   paramsRef.current = { navigate, resumeSession }
 
   useEffect(() => {
-    // The HUD's own renderer mounts the same wiring; it is the window going
-    // away, so it has nothing to re-home.
+    // A hidden HUD keeps its socket. Reclaim the stream on reveal in case the
+    // main window resumed this session while the popup was dismissed.
     if (isHudWindow()) {
-      return
+      let wasOpen = true
+
+      return window.hermesDesktop?.hud?.onChanged?.(({ open }) => {
+        const reopening = open && !wasOpen
+        wasOpen = open
+
+        if (!open) {
+          requestComposerDraftSync('flush')
+
+          return
+        }
+
+        const selected = $selectedStoredSessionId.get()
+
+        if (reopening && selected) {
+          void paramsRef.current.resumeSession(selected)
+        }
+      })
     }
 
     return watchHudState(hudSessionId => {

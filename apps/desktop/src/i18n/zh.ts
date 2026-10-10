@@ -348,7 +348,6 @@ export const zhOverrides = {
     layoutEditor: '布局编辑器',
     layoutEditorTitle: mod => `布局编辑器 — ${mod} 点击重置布局`
   },
-
   keybinds: {
     title: '键盘快捷键',
     subtitle: open => `点击快捷键即可重新绑定 · ${open} 可重新打开此面板。`,
@@ -405,6 +404,7 @@ export const zhOverrides = {
       'composer.reasoningUp': '提高推理等级',
       'composer.reasoningDown': '降低推理等级',
       'view.toggleSidebar': '切换会话侧边栏',
+      'view.toggleHud': '显示 / 隐藏 HUD（全局）',
       'view.toggleRightSidebar': '切换文件浏览器',
       'view.toggleReview': '切换审查面板',
       'view.toggleStatusbar': '切换状态栏',
@@ -1320,11 +1320,11 @@ export const zhOverrides = {
       showOptions: '显示选项'
     },
     hudModifier: {
-      title: '轻按唤出 HUD',
+      title: '轻按切换 HUD',
       description:
-        '在 Mac 上按下并松开 ⌘ + Option，在 Windows/Linux 上按下并松开 Ctrl + Alt，即可从任意应用将 HUD 置于前台。默认关闭，仅适用于此设备。',
+        '在 Mac 上按下并松开 ⌘ + Option，在 Windows/Linux 上按下并松开 Ctrl + Alt，即可从任何应用显示或隐藏 HUD。默认关闭，仅适用于此设备。',
       permission: '请在系统设置 → 隐私与安全性 → 输入监控中允许 Hermes，然后重试。此手势不会记录按键或截取屏幕。',
-      unavailable: 'HUD 手势辅助程序无法启动或意外停止。请重试或重启 Hermes。Hermes 内原有的 HUD 快捷键仍可使用。',
+      unavailable: 'HUD 手势辅助程序无法启动或意外停止。请重试或重启 Hermes。',
       missingHelper: '此 Hermes 安装缺少 HUD 手势辅助程序。请更新或重新安装 Hermes，然后重试。',
       unsupportedSession: '此桌面会话不支持全局修饰键轻按事件。Linux 需要 X11；不支持 Wayland。'
     },

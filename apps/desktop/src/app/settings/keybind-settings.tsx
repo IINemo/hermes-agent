@@ -1,5 +1,5 @@
 import { useStore } from '@nanostores/react'
-import { useContext, useMemo, useState } from 'react'
+import { useContext, useEffect, useMemo, useState } from 'react'
 
 import { Button } from '@/components/ui/button'
 import { Codicon } from '@/components/ui/codicon'
@@ -23,6 +23,7 @@ import { arraysEqual } from '@/lib/storage'
 import {
   $bindings,
   $capture,
+  $hudShortcutError,
   beginCapture,
   bindingsFor,
   clearBinding,
@@ -64,6 +65,7 @@ export function KeybindSettings({ subpage }: KeybindSettingsProps = {}) {
 }
 
 function ShortcutSettings({ includeScreenshot }: { includeScreenshot: boolean }) {
+  useEffect(() => () => endCapture(), [])
   const { t } = useI18n()
   const hasBreadcrumb = useContext(SettingsBreadcrumbContext)
   const bindings = useStore($bindings)
@@ -233,6 +235,17 @@ function KeybindRow({ action }: { action: KeybindActionMeta }) {
   const k = t.keybinds
   const bindings = useStore($bindings)
   const capture = useStore($capture)
+  const hudShortcutError = useStore($hudShortcutError)
+  const error = action.id === 'view.toggleHud' ? hudShortcutError : null
+
+  const errors = {
+    taken: t.settings.quickEntry.takenBy,
+    invalid: t.settings.quickEntry.invalidShortcut,
+    save: t.settings.screenshot.saveFailed,
+    load: t.settings.screenshot.loadFailed
+  }
+
+  const status = error ? errors[error] : null
 
   // bindingsFor resolves stored overrides for late-registered (contributed)
   // actions too — $bindings only carries built-ins, so a raw lookup would show
@@ -248,7 +261,14 @@ function KeybindRow({ action }: { action: KeybindActionMeta }) {
 
   return (
     <div className="group flex items-center gap-2.5 rounded-lg px-2.5 py-1 transition-colors hover:bg-(--chrome-action-hover)">
-      <span className="min-w-0 flex-1 truncate text-[0.82rem] text-foreground/90">{label}</span>
+      <div className="min-w-0 flex-1">
+        <span className="block truncate text-[0.82rem] text-foreground/90">{label}</span>
+        {status && (
+          <span className="block text-[0.72rem] text-amber-500/90" role="status">
+            {status}
+          </span>
+        )}
+      </div>
 
       {conflict && (
         <span className="flex size-4 items-center justify-center text-amber-500/90" title={k.conflictWith(conflict)}>

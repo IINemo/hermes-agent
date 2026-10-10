@@ -179,6 +179,17 @@ contextBridge.exposeInMainWorld('hermesDesktop', {
       return () => ipcRenderer.removeListener('hermes:hud:game-overlay', listener)
     }
   },
+  hudShortcut: {
+    getSettings: legacyCombo => ipcRenderer.invoke('hermes:hud-shortcut:get', legacyCombo),
+    setShortcut: combo => ipcRenderer.invoke('hermes:hud-shortcut:set', combo),
+    setCapturing: capturing => ipcRenderer.invoke('hermes:hud-shortcut:capture', capturing),
+    onStatus: callback => {
+      const listener = (_event, status) => callback(status)
+      ipcRenderer.on('hermes:hud-shortcut:status', listener)
+
+      return () => ipcRenderer.removeListener('hermes:hud-shortcut:status', listener)
+    }
+  },
   hudModifier: {
     getSettings: () => ipcRenderer.invoke('hermes:hud-modifier:settings:get'),
     setEnabled: enabled => ipcRenderer.invoke('hermes:hud-modifier:settings:set', enabled),

@@ -5,6 +5,8 @@ import { allKeybindActions, defaultBindings, keybindAction, type KeybindBindings
 import { canonicalizeCombo } from '@/lib/keybinds/combo'
 import { arraysEqual, persistString, storedString } from '@/lib/storage'
 
+import type { HudShortcutStatus } from '../../electron/hud-shortcut-types'
+
 const STORAGE_KEY = 'hermes.desktop.keybinds'
 
 // The user's raw stored overrides. Kept verbatim so an action CONTRIBUTED
@@ -86,6 +88,75 @@ export const $bindings = atom<KeybindBindings>(loadBindings())
 
 $bindings.subscribe(persistBindings)
 
+export const $hudShortcutError = atom<'invalid' | 'taken' | 'load' | 'save' | null>(null)
+let hudShortcutRevision = 0
+let hudShortcutWrite = 0
+
+const hudShortcutApi = () => (typeof window === 'undefined' ? undefined : window.hermesDesktop?.hudShortcut)
+
+/** Main owns this device-wide binding; each renderer caches its live reply. */
+export function initHudShortcut(): () => void {
+  const api = hudShortcutApi()
+
+  if (!api) {
+    return () => {}
+  }
+
+  let disposed = false
+
+  const adopt = (status: HudShortcutStatus) => {
+    hudShortcutRevision += 1
+    $hudShortcutError.set(status.error)
+    $bindings.set({ ...$bindings.get(), 'view.toggleHud': status.combo ? [status.combo] : [] })
+  }
+
+  const off = api.onStatus(adopt)
+  const current = hudShortcutRevision
+  // Adopt a pre-existing renderer rebind once, then Electron's saved setting wins.
+  void api
+    .getSettings(bindingsFor('view.toggleHud')[0] ?? null)
+    .then(status => {
+      if (!disposed && hudShortcutRevision === current) {
+        adopt(status)
+      }
+    })
+    .catch(() => $hudShortcutError.set('load'))
+
+  return () => {
+    disposed = true
+    off()
+  }
+}
+
+function applyBindings(next: KeybindBindings): void {
+  const api = hudShortcutApi()
+
+  if (!api || arraysEqual(next['view.toggleHud'] ?? [], $bindings.get()['view.toggleHud'] ?? [])) {
+    $bindings.set(next)
+
+    return
+  }
+
+  $bindings.set({ ...next, 'view.toggleHud': $bindings.get()['view.toggleHud'] ?? [] })
+  const version = hudShortcutRevision
+  const request = ++hudShortcutWrite
+  void api
+    .setShortcut(next['view.toggleHud']?.[0] ?? null)
+    .then(status => {
+      if (request !== hudShortcutWrite || version !== hudShortcutRevision) {
+        return
+      }
+
+      $hudShortcutError.set(status.error)
+      $bindings.set({ ...$bindings.get(), 'view.toggleHud': status.combo ? [status.combo] : [] })
+    })
+    .catch(() => {
+      if (request === hudShortcutWrite) {
+        $hudShortcutError.set('save')
+      }
+    })
+}
+
 /** Live combos for an action: explicit binding → stored override → default. */
 export function bindingsFor(id: string, bindings: KeybindBindings = $bindings.get()): string[] {
   return bindings[id] ?? storedOverrides[id] ?? [...(keybindAction(id)?.defaults ?? [])]
@@ -100,6 +171,12 @@ export const $comboIndex = computed([$bindings, $registryVersion], bindings => {
   const index = new Map<string, string[]>()
 
   for (const action of allKeybindActions()) {
+    // Electron owns this chord even when another macOS app has focus. Do not
+    // dispatch a second toggle if Chromium also receives the same keypress.
+    if (action.id === 'view.toggleHud' && hudShortcutApi()) {
+      continue
+    }
+
     for (const combo of bindingsFor(action.id, bindings)) {
       const key = canonicalizeCombo(combo)
       const ids = index.get(key)
@@ -120,7 +197,7 @@ export function setBinding(actionId: string, combos: string[]): void {
     return
   }
 
-  $bindings.set({ ...$bindings.get(), [actionId]: [...combos] })
+  applyBindings({ ...$bindings.get(), [actionId]: [...combos] })
 }
 
 /** Drop every combo. Empty is persisted, so a shipped default stays unbound. */
@@ -135,11 +212,11 @@ export function resetBinding(actionId: string): void {
     return
   }
 
-  $bindings.set({ ...$bindings.get(), [actionId]: [...action.defaults] })
+  applyBindings({ ...$bindings.get(), [actionId]: [...action.defaults] })
 }
 
 export function resetAllBindings(): void {
-  $bindings.set(defaultBindings())
+  applyBindings(defaultBindings())
 }
 
 // Other actions that already use `combo` (excluding `actionId` itself). A
@@ -170,11 +247,34 @@ export function conflictsFor(actionId: string, combo: string): string[] {
 export const $capture = atom<string | null>(null)
 
 export function beginCapture(actionId: string): void {
-  $capture.set(actionId)
+  const api = hudShortcutApi()
+
+  if (!api) {
+    $capture.set(actionId)
+
+    return
+  }
+
+  const request = ++captureRequest
+  // Release the global chord before recording keys, including its current chord.
+  void api
+    .setCapturing(true)
+    .then(() => {
+      if (request === captureRequest) {
+        $capture.set(actionId)
+      }
+    })
+    .catch(() => $hudShortcutError.set('save'))
 }
 
+let captureRequest = 0
+
 export function endCapture(): void {
+  captureRequest += 1
   $capture.set(null)
+  void hudShortcutApi()
+    ?.setCapturing(false)
+    .catch(() => $hudShortcutError.set('save'))
 }
 
 export type CaptureStep = { type: 'cancel' } | { type: 'set'; combos: string[] } | { type: 'wait' }

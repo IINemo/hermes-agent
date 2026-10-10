@@ -16,6 +16,7 @@
 import { atom } from 'nanostores'
 
 import { requestComposerDraftSync } from '@/store/composer'
+import { initHudShortcut } from '@/store/keybinds'
 import { $activeGatewayProfile, normalizeProfileKey } from '@/store/profile'
 import { $sessions, rememberedSessionProfile } from '@/store/session'
 import { isHudWindow } from '@/store/windows'
@@ -71,8 +72,7 @@ export function openHud(sessionId?: null | string): void {
   void api.open({ sessionId: sessionId ?? null, profile })
 }
 
-/** Leave HUD mode. Callable from either window — main closes the child, the
- *  HUD closes itself; both restore the app window. */
+/** Dismiss the popup from either window, preserving its live chat and draft. */
 export function closeHud(): void {
   const api = window.hermesDesktop?.hud
 
@@ -104,14 +104,19 @@ export const reportHudSession = (sessionId: null | string): void => window.herme
  * Electron.
  */
 export function watchHudState(onClosed?: (sessionId: null | string) => void): () => void {
-  const off = window.hermesDesktop?.hud?.onChanged?.(({ open, sessionId }) => {
+  const offShortcut = initHudShortcut()
+
+  const off = window.hermesDesktop?.hud?.onChanged?.(({ open, sessionId, retained }) => {
     $hudActive.set(open)
     $hudSession.set(open ? sessionId : null)
 
-    if (!open) {
+    if (!open && !retained) {
       onClosed?.(sessionId)
     }
   })
 
-  return off ?? (() => {})
+  return () => {
+    off?.()
+    offShortcut()
+  }
 }

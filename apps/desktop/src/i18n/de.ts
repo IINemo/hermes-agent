@@ -627,7 +627,7 @@ export const deOverrides = {
       'view.toggleSimpleMode': 'Einfachen Modus umschalten',
       'view.showFiles': 'Dateibrowser anzeigen',
       'view.showBrowser': 'Browser umschalten',
-      'view.toggleHud': 'HUD-Modus umschalten',
+      'view.toggleHud': 'HUD-Popup umschalten (global)',
       'hud.snapToPointer': 'HUD zum Zeiger bewegen (global, während HUD offen ist)',
       'view.showTerminal': 'Terminal umschalten',
       'view.newTerminal': 'Neues Terminal',
@@ -1606,13 +1606,13 @@ export const deOverrides = {
       resetOnboardingFailed: 'Onboarding konnte nicht zurückgesetzt werden'
     },
     hudModifier: {
-      title: 'Tippen, um das HUD aufzurufen',
+      title: 'Tippen, um das HUD umzuschalten',
       description:
-        'Tippen Sie kurz auf ⌘ + Option (Mac) bzw. Strg + Alt (Windows/Linux), um das HUD aus jeder App nach vorn zu holen. Standardmäßig aus; gilt nur für dieses Gerät.',
+        'Tippen Sie kurz auf ⌘ + Option (Mac) bzw. Strg + Alt (Windows/Linux), um das HUD aus jeder App ein- oder auszublenden. Standardmäßig aus; nur auf diesem Gerät.',
       permission:
         'Erlauben Sie Hermes unter Systemeinstellungen → Datenschutz & Sicherheit → Eingabeüberwachung und versuchen Sie es erneut. Diese Geste zeichnet keine Tastenanschläge auf und nimmt Ihren Bildschirm nicht auf.',
       unavailable:
-        'Das Hilfsprogramm für die HUD-Geste konnte nicht starten oder wurde unerwartet beendet. Versuchen Sie es erneut oder starten Sie Hermes neu. Das bestehende HUD-Tastenkürzel funktioniert innerhalb von Hermes weiterhin.',
+        'Das Hilfsprogramm für die HUD-Geste konnte nicht starten oder wurde unerwartet beendet. Versuchen Sie es erneut oder starten Sie Hermes neu.',
       missingHelper:
         'In dieser Hermes-Installation fehlt das Hilfsprogramm für die HUD-Geste. Aktualisieren oder installieren Sie Hermes neu und versuchen Sie es erneut.',
       unsupportedSession:

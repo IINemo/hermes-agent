@@ -15,7 +15,7 @@ vi.mock('@/store/session-states', () => ({ focusOpenSession: () => 'main', sessi
 
 import { useHudHandoff } from './handoff'
 
-type HudChanged = (state: { open: boolean; sessionId: null | string }) => void
+type HudChanged = (state: { open: boolean; sessionId: null | string; retained?: boolean }) => void
 
 const desktopWindow = window as unknown as { hermesDesktop?: Window['hermesDesktop'] }
 const initialHermesDesktop = desktopWindow.hermesDesktop
@@ -58,4 +58,16 @@ it('puts the caret back in the app composer when the HUD closes', () => {
 
   emitHudChanged?.({ open: false, sessionId: 's1' })
   expect(requestComposerFocus).toHaveBeenCalledOnce()
+})
+
+it('leaves main-window focus and session routing alone when the popup is only hidden', () => {
+  const resumeSession = vi.fn()
+  const navigate = vi.fn()
+  const { unmount } = renderHook(() => useHudHandoff({ navigate, resumeSession }))
+
+  emitHudChanged?.({ open: false, sessionId: 'popup-session', retained: true })
+  expect(requestComposerFocus).not.toHaveBeenCalled()
+  expect(resumeSession).not.toHaveBeenCalled()
+  expect(navigate).not.toHaveBeenCalled()
+  unmount()
 })

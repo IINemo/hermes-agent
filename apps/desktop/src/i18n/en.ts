@@ -624,7 +624,7 @@ export const en: Translations = {
       'view.toggleSimpleMode': 'Toggle Simple mode',
       'view.showFiles': 'Show file browser',
       'view.showBrowser': 'Toggle browser',
-      'view.toggleHud': 'Toggle HUD mode',
+      'view.toggleHud': 'Toggle HUD popup (global)',
       'hud.snapToPointer': 'Move HUD to pointer (global, while HUD is open)',
       'view.showTerminal': 'Toggle terminal',
       'view.newTerminal': 'New terminal',
@@ -1265,13 +1265,12 @@ export const en: Translations = {
       showOptions: 'Show options'
     },
     hudModifier: {
-      title: 'Tap to summon HUD',
+      title: 'Tap to toggle HUD',
       description:
-        'Tap and release ⌘ + Option on Mac, or Ctrl + Alt on Windows/Linux, to bring the HUD forward from any app. Off by default; applies only to this device.',
+        'Tap and release ⌘ + Option on Mac, or Ctrl + Alt on Windows/Linux, to show or hide the HUD from any app. Off by default; applies only to this device.',
       permission:
         'Allow Hermes in System Settings → Privacy & Security → Input Monitoring, then retry. This gesture does not record keystrokes or capture your screen.',
-      unavailable:
-        'The HUD gesture helper could not start or stopped unexpectedly. Retry, or restart Hermes. The existing HUD shortcut still works inside Hermes.',
+      unavailable: 'The HUD gesture helper could not start or stopped unexpectedly. Retry, or restart Hermes.',
       missingHelper:
         'This Hermes installation is missing the HUD gesture helper. Update or reinstall Hermes, then retry.',
       unsupportedSession:

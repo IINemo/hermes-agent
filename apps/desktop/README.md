@@ -114,6 +114,9 @@ Use [BUILDING.md](BUILDING.md) for the native bundled builder, Azure/Apple
 signing, R2 artifact publication, and release gates. The current release matrix
 publishes Windows and macOS packages; Linux desktop legs are disabled.
 
+For the recorded procedure used to replace the local macOS app with this fork
+while preserving settings and chats, see [Local macOS update](LOCAL_MACOS_UPDATE.md).
+
 ### How it works
 
 The bundled app carries the Electron shell, native React chat surface, and

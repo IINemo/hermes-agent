@@ -329,6 +329,8 @@ import { applyHudResetBounds, defaultHudBounds } from './hud-geometry'
 import { registerHudIpc } from './hud-ipc'
 import { installHudModifierTap } from './hud-modifier'
 import { applyHudElectronOverlay, promoteHudOverlay } from './hud-overlay'
+import { createHudPopup } from './hud-popup'
+import { installHudShortcut } from './hud-shortcut'
 import { snapHudBounds } from './hud-snap'
 import { createHudSnapShortcut } from './hud-snap-shortcut'
 import { buildHudWindowUrl } from './hud-url'
@@ -14258,19 +14260,11 @@ function rehomePetOverlay() {
 // own gateway — the same thing createInstanceWindow() spawns, reshaped. That
 // is deliberate: the HUD renders the real chat surface, so its composer is the
 // app's composer (slash commands, attachments, queue, voice) instead of a
-// lookalike that drifts. Entering HUD mode hides the main window; leaving
-// restores it.
+// lookalike that drifts. The popup is independent of the main window.
 let hudWindow: BrowserWindow | null = null
 // A closing HUD is no longer the active one, but its shortcut still belongs
 // to HUD until Electron actually destroys that window.
 const hudWindows = new WeakSet<BrowserWindow>()
-
-// Whether closing the HUD should bring the main window back. Armed whenever a
-// live main window exists at HUD-open time, visible or not: the HUD hides the
-// app window itself, so a main window minimized or behind another app when
-// the HUD opened still needs a surface back — arming only on `isVisible()`
-// left the user with NO Hermes window after the second toggle (#88513).
-let hudRestoreMainWindow = false
 
 // The session the HUD is currently on, reported by its renderer whenever the
 // selection changes. Leaving HUD mode is a HANDOFF, not just a window close:
@@ -14563,7 +14557,8 @@ function hudUrl(sessionId, profile) {
 // Carries the HUD's session so the app window can re-home onto it on the way
 // out (see hudSessionId).
 function broadcastHudState(open) {
-  const payload = { open, sessionId: hudSessionId }
+  hudPopup.changed(open)
+  const payload = { open, sessionId: hudSessionId, retained: Boolean(hudWindow && !hudWindow.isDestroyed()) }
 
   for (const win of BrowserWindow.getAllWindows()) {
     if (!win.isDestroyed()) {
@@ -14642,16 +14637,8 @@ function spawnHudWindow(sessionId, profile) {
   startHudGameOverlayFeed(win)
 
   wireWindowReveal(win, {
-    show: () => {
-      win.show()
-      win.focus()
-    },
+    show: () => hudPopup.reveal(win),
     onRevealed: () => {
-      // Step the app aside: the HUD IS the surface now.
-      if (hudRestoreMainWindow && mainWindow && !mainWindow.isDestroyed()) {
-        mainWindow.hide()
-      }
-
       // Compositor overlay adapters (Hyprland float+pin today). Electron
       // alwaysOnTop is already set; this is the dialect some WMs actually hear.
       void promoteHudOverlay({ title: HUD_WINDOW_TITLE })
@@ -14661,11 +14648,19 @@ function spawnHudWindow(sessionId, profile) {
     // diagnosable, not resurrected). But a load failure or renderer crash
     // BEFORE first paint leaves a hidden window every toggle claims is open.
     // Tear it down instead: requestHudClose is bounded, and the 'closed'
-    // handler below owns the one teardown path (snap shortcut, main-window
-    // restore, broadcastHudState(false)) so the toggles converge to closed.
+    // handler below owns the one teardown path (snap shortcut,
+    // broadcastHudState(false)) so the toggles converge to closed.
     onRevealFailed: reason => {
       rememberLog(`[renderer:hud] window never revealed; tearing it down (${reason})`)
       destroyHudWindow(win)
+    }
+  })
+
+  // Native close (including Cmd+W) dismisses without destroying the live chat.
+  win.on('close', event => {
+    if (!isQuittingForHandoff && !backendShutdown.hasStarted() && hudWindow === win) {
+      event.preventDefault()
+      closeHudWindow()
     }
   })
 
@@ -14680,10 +14675,8 @@ function spawnHudWindow(sessionId, profile) {
 
     // Whether the close came from closeHudWindow() or from the window's own
     // side (a crashed renderer, a native close), this is the one teardown:
-    // release the global snap shortcut, put the app back so the user is never
-    // left with no surface, and correct every window's toggle.
+    // release the snap shortcut and correct every window's toggle.
     hudSnapShortcut.dispose()
-    restoreMainWindowFromHud()
     broadcastHudState(false)
   })
 
@@ -14703,21 +14696,8 @@ function spawnHudWindow(sessionId, profile) {
   return win
 }
 
-// Put the app window back, and give it the keyboard. `focusWindow`, not a bare
-// `show()`: show() alone leaves a minimized window minimized, and on macOS a
-// shown-but-not-key window means the user is looking at the app with the
-// caret still belonging to whatever the HUD was floating over.
-function restoreMainWindowFromHud() {
-  if (!hudRestoreMainWindow) {
-    return
-  }
-
-  hudRestoreMainWindow = false
-  focusWindow(mainWindow)
-}
-
 // Take the HUD window down. The 'closed' handler stays attached so ONE path
-// owns the teardown (snap shortcut, main-window restore, close broadcast)
+// owns the teardown (snap shortcut, close broadcast)
 // whether the window went via the exit button, ⌘W, a profile respawn, or the
 // grace deadline — detaching it before close() was how a renderer that never
 // answered the close left an always-on-top HUD nobody could dismiss and no
@@ -14765,11 +14745,12 @@ function openHudWindow(sessionId, profile) {
     }
 
     focusWindow(hudWindow)
+    broadcastHudState(true)
+    registerHudSnapShortcut()
 
     return hudWindow
   }
 
-  hudRestoreMainWindow = Boolean(mainWindow && !mainWindow.isDestroyed())
   hudSessionId = sessionId || null
   hudProfile = profileKey
   hudWindow = spawnHudWindow(sessionId, profileKey)
@@ -14783,7 +14764,9 @@ function closeHudWindow() {
   const win = hudWindow
 
   if (win && !win.isDestroyed()) {
-    destroyHudWindow(win)
+    win.hide()
+    hudSnapShortcut.dispose()
+    broadcastHudState(false)
 
     return
   }
@@ -14792,9 +14775,14 @@ function closeHudWindow() {
   // release what an open HUD holds, so the toggles read right.
   hudWindow = null
   hudSnapShortcut.dispose()
-  restoreMainWindowFromHud()
   broadcastHudState(false)
 }
+
+const hudPopup = createHudPopup({
+  open: () => openHudWindow(hudSessionId, hudProfile),
+  dismiss: closeHudWindow,
+  canToggle: () => !isQuittingForHandoff && !backendShutdown.hasStarted()
+})
 
 // ── Quick Entry ─────────────────────────────────────────────────────────────
 //
@@ -19393,13 +19381,13 @@ app.whenReady().then(() => {
   // here and surfaced in Settings via the IPC state (never silent).
   applyQuickEntrySettings(readQuickEntrySettings())
   installCommandScreenshot({ rendererUrl: DEV_SERVER || pathToFileURL(resolveRendererIndex()).toString() })
+  installHudShortcut({
+    rendererUrl: DEV_SERVER || pathToFileURL(resolveRendererIndex()).toString(),
+    toggle: hudPopup.toggle
+  })
   installHudModifierTap({
     rendererUrl: DEV_SERVER || pathToFileURL(resolveRendererIndex()).toString(),
-    summon: () => {
-      if (!isQuittingForHandoff && !backendShutdown.hasStarted()) {
-        openHudWindow(null, null)
-      }
-    }
+    summon: hudPopup.toggle
   })
 
   if (IS_MAC) {
@@ -19727,8 +19715,7 @@ app.on('before-quit', event => {
 
   // Same for the HUD — an always-on-top panel outliving the app would leave a
   // floating composer with nothing behind it. Close it directly rather than via
-  // closeHudWindow(): that also re-shows the main window, which is wrong on the
-  // way out (and `hudRestoreMainWindow` may still be armed from entering HUD).
+  // closeHudWindow(): that only hides the live popup; quitting must destroy it.
   hudSnapShortcut.dispose()
 
   if (hudWindow && !hudWindow.isDestroyed()) {

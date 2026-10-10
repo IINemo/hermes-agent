@@ -627,7 +627,7 @@ export const frOverrides = {
       'view.toggleSimpleMode': 'Activer ou désactiver le mode simple',
       'view.showFiles': "Afficher l'explorateur de fichiers",
       'view.showBrowser': 'Basculer le navigateur',
-      'view.toggleHud': 'Basculer le mode HUD',
+      'view.toggleHud': 'Afficher / masquer le HUD (global)',
       'hud.snapToPointer': 'Déplacer le HUD vers le pointeur (global, lorsque le HUD est ouvert)',
       'view.showTerminal': 'Basculer le terminal',
       'view.newTerminal': 'Nouveau terminal',
@@ -1613,13 +1613,13 @@ export const frOverrides = {
       resetOnboardingFailed: 'Impossible de réinitialiser la configuration initiale'
     },
     hudModifier: {
-      title: 'Toucher pour afficher le HUD',
+      title: 'Toucher pour afficher ou masquer le HUD',
       description:
-        'Appuyez puis relâchez ⌘ + Option sur Mac, ou Ctrl + Alt sous Windows/Linux, pour afficher le HUD depuis n’importe quelle application. Désactivé par défaut ; s’applique uniquement à cet appareil.',
+        'Appuyez puis relâchez ⌘ + Option sur Mac, ou Ctrl + Alt sous Windows/Linux, pour afficher ou masquer le HUD depuis toute application. Désactivé par défaut ; uniquement sur cet appareil.',
       permission:
         'Autorisez Hermes dans Réglages Système → Confidentialité et sécurité → Surveillance de l’entrée, puis réessayez. Ce geste n’enregistre pas les frappes et ne capture pas votre écran.',
       unavailable:
-        'L’assistant du geste HUD n’a pas pu démarrer ou s’est arrêté de manière inattendue. Réessayez ou redémarrez Hermes. Le raccourci HUD existant fonctionne toujours dans Hermes.',
+        'L’assistant du geste HUD n’a pas pu démarrer ou s’est arrêté de manière inattendue. Réessayez ou redémarrez Hermes.',
       missingHelper:
         'Il manque l’assistant du geste HUD dans cette installation de Hermes. Mettez à jour ou réinstallez Hermes, puis réessayez.',
       unsupportedSession:
