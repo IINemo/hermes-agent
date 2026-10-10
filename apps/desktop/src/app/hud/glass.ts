@@ -28,7 +28,7 @@ const DRAWER_SELECTOR = '[data-slot="composer-completion-drawer"]'
  * untinted frost on screen — a grey blurred rectangle that pops out at the end
  * instead of a band fading away.
  *
- * Engaged means the caret is in the composer, and it is the SAME gate the
+ * Engaged means typing or reading/copying in the transcript, the SAME gate the
  * `[data-hud-glass]` scrim runs on — the frost is what that scrim is painted
  * over, so a frost the scrim doesn't cover is bare material. The caller used
  * to widen this to "recent or held", which put the window's material up for
@@ -38,7 +38,8 @@ const DRAWER_SELECTOR = '[data-slot="composer-completion-drawer"]'
  *
  * Merely holding window focus does not count: activating a window restores
  * focus to whatever had it last, so grabbing the bar to drag the HUD would
- * otherwise read as sitting down to use it. Queried live rather than tracked
+ * otherwise read as sitting down to use it. Composer focus is queried live
+ * rather than tracked
  * from document.activeElement, which stays put when the window is blurred and
  * would latch the frost on forever once the user had ever typed here — the
  * window's own focus changes are listened for so the query is re-run when
@@ -76,7 +77,7 @@ export function useHudGlass(rootRef: RefObject<HTMLElement | null>, backing: boo
       const drawer = root.querySelector(DRAWER_SELECTOR) !== null
       root.toggleAttribute('data-hud-typing', typing)
       root.toggleAttribute('data-hud-drawer', drawer)
-      const next = backing && !drawer && typing
+      const next = backing && !drawer && (typing || root.hasAttribute('data-hud-reading'))
 
       if (on !== next) {
         on = next
@@ -102,7 +103,7 @@ export function useHudGlass(rootRef: RefObject<HTMLElement | null>, backing: boo
 
     const observer = new MutationObserver(schedule)
 
-    observer.observe(root, { childList: true, subtree: true })
+    observer.observe(root, { childList: true, subtree: true, attributes: true, attributeFilter: ['data-hud-reading'] })
 
     apply()
     root.addEventListener('focusin', apply)

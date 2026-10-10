@@ -211,6 +211,34 @@ the same HUD conversation, and the installed renderer archive matched the
 packaged archive. Reading-position restoration was verified by the regression
 tests; a visual scroll comparison in the native fading HUD was inconclusive.
 
+## Popup follow-up: copying replies
+
+The HUD's pointer-down handler previously canceled browser text selection and
+returned focus to the composer. Selecting a reply by dragging therefore left
+no selection for **⌘C**. Moving focus to a message action also let the
+transcript fade and stop accepting pointer input.
+
+Transcript gestures now use normal browser selection. The band remains
+readable and interactive during a selection and while a transcript control
+has focus; window deactivation releases that state. The existing per-message
+Copy buttons and desktop clipboard bridge are reused. This follow-up starts
+from `02008ef2` plus the local copying changes.
+
+The selection and Copy-button regression tests both failed before the fix.
+All 119 tests across 18 focused HUD, transcript, and selection test files passed.
+TypeScript, desktop lint (no errors), all 11 repository checks, and the build
+also passed. The build timestamp is `2026-10-10T16:19:54.403Z`; it replaced
+`/Applications/Hermes.app` after strict signature verification. The prior
+scroll-preserving build is backed up at
+`.cache/hermes-app-backups/20261010T162104Z/Hermes.app`. All 14 desktop JSON
+settings files were preserved byte for byte during replacement.
+The relaunched UI showed **Backend ready**. In the installed HUD, a reply's
+Copy button showed **Copied**, and pasting into the unsent composer returned
+the complete reply. The verification draft was cleared without sending it.
+Native keyboard/drag automation was inconclusive; selection handling is covered
+by the regression tests. The installed renderer archive matched the packaged
+archive, and the saved disabled modifier gesture and global shortcut were retained.
+
 The temporary logs and receipt used were:
 
 - `/private/tmp/hermes-popup-build-delivery.log`

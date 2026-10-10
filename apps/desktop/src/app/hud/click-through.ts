@@ -43,7 +43,9 @@ export function hudIgnoresMouse(
 
   const overlayFocused = windowFocused && active !== null && !root.contains(active) && !active.contains(root)
 
-  return !composerFocused && !overSomething && !overlayFocused
+  const reading = windowFocused && root.hasAttribute('data-hud-reading')
+
+  return !composerFocused && !reading && !overSomething && !overlayFocused
 }
 
 /**

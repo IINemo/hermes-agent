@@ -83,6 +83,14 @@ describe('hudIgnoresMouse', () => {
     expect(hudIgnoresMouse(shell, mount, document.body, true)).toBe(true)
   })
 
+  it('keeps a transcript selection solid until the HUD window loses focus', () => {
+    const { mount, shell } = hud()
+    shell.setAttribute('data-hud-reading', '')
+
+    expect(hudIgnoresMouse(shell, mount, document.body, true)).toBe(false)
+    expect(hudIgnoresMouse(shell, mount, document.body, false)).toBe(true)
+  })
+
   it('stays solid while a gesture owns the window, even once the hit test goes empty', () => {
     const { mount, shell } = hud()
     const handle = document.createElement('div')

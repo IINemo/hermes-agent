@@ -3087,7 +3087,7 @@ button[data-slot='aui_msg-reactions'] svg {
    the tinted sheet is the thing that reads as a desktop window parked on the
    action, and it is most of the HUD's rectangle. Streaming shows words on the
    game; sitting down to read promotes the surface. */
-[data-hud-shell][data-hud-typing] [data-hud-glass] {
+[data-hud-shell]:is([data-hud-typing], [data-hud-reading]) [data-hud-glass] {
   translate: none;
   opacity: 1;
   transition-duration: var(--hud-reveal);
@@ -3139,17 +3139,18 @@ button[data-slot='aui_msg-reactions'] svg {
 /* Engaged, the field steps up the same way the docked thread's does — but
    never below the resting tint, so a high lever cannot make focusing the
    composer paint MORE transparent than glancing at it. */
-:root[data-hermes-glass-on] [data-hud-shell][data-hud-typing] [data-hud-glass] {
+:root[data-hermes-glass-on] [data-hud-shell]:is([data-hud-typing], [data-hud-reading]) [data-hud-glass] {
   background: rgb(12 14 18 / 0.72);
 }
 
-/* Engaged means the caret is in the composer, not merely that the window holds
-   focus somewhere. Activating a window restores focus to whatever had it last,
+/* Engaged means typing in the composer or selecting/using the transcript,
+   not merely that the window holds focus somewhere. Activating a window
+   restores focus to whatever had it last,
    so `:focus-within` counted grabbing the bar to DRAG the HUD as sitting down
    to use it, and the transcript flew open every time it was moved. Hit-testing
    below stays on :focus-within — being permissive about what can be clicked is
    harmless, being permissive about what lights up is not. */
-[data-hud-shell][data-hud-typing] [data-hud-glass] {
+[data-hud-shell]:is([data-hud-typing], [data-hud-reading]) [data-hud-glass] {
   background: rgb(12 14 18 / 0.82);
 }
 
@@ -3183,7 +3184,7 @@ button[data-slot='aui_msg-reactions'] svg {
    so an interactive band IS a dead zone over the action). Sitting down in the
    composer is the deliberate act that makes the transcript a surface you can
    scroll and click links in. */
-[data-hud-shell][data-hud-typing] [data-slot='composer-bounds'] {
+[data-hud-shell]:is([data-hud-typing], [data-hud-reading]) [data-slot='composer-bounds'] {
   pointer-events: auto;
 }
 
@@ -3326,7 +3327,7 @@ button[data-slot='aui_msg-reactions'] svg {
   color: var(--hud-overlay-ink-user) !important;
 }
 
-[data-hud-shell][data-hud-typing] [data-slot='composer-bounds'] {
+[data-hud-shell]:is([data-hud-typing], [data-hud-reading]) [data-slot='composer-bounds'] {
   opacity: 1;
   translate: none;
   transition-duration: var(--hud-reveal);
