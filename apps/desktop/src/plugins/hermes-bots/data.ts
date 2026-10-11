@@ -884,13 +884,13 @@ async function reconcileBotMeta(rows: RosterRow[], fetchedAt: number): Promise<v
   )
 }
 
-export function useRoster() {
+export function useRoster({ poll = true }: { poll?: boolean } = {}) {
   const activeConnectionId = useValue(host.state.connectionId)
 
   return useQuery({
     queryKey: [...ROSTER_KEY, activeConnectionId],
     queryFn: () => fetchRosterSnapshot(activeConnectionId),
-    refetchInterval: 5000,
+    refetchInterval: poll ? 5000 : false,
     staleTime: 5000,
     retry: ROSTER_QUERY_RETRY,
     retryDelay: attempt => Math.min(15000, 1000 * 2 ** attempt)

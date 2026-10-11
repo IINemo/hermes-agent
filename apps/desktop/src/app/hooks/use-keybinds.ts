@@ -20,6 +20,7 @@ import { findBarClaimsCombo } from '@/lib/find-in-page'
 import {
   contributedKeybindHandler,
   keybindAction,
+  keybindActionsForWindow,
   PROFILE_SLOT_COUNT,
   SESSION_SLOT_COUNT,
   TAB_SLOT_COUNT
@@ -87,7 +88,7 @@ import {
 } from '@/store/session-switcher'
 import { toggleStatusbarVisible } from '@/store/statusbar-prefs'
 import { requestThreadPageScroll } from '@/store/thread-scroll'
-import { openNewWindow } from '@/store/windows'
+import { isHudWindow, openNewWindow } from '@/store/windows'
 import { useTheme } from '@/themes/context'
 
 import {
@@ -542,10 +543,10 @@ export function useKeybinds(deps: KeybindRuntimeDeps): void {
         return
       }
 
-      const actionIds = $comboIndex.get().get(combo)
+      const actionIds = keybindActionsForWindow($comboIndex.get().get(combo), isHudWindow())
 
       // Unbound printable → type-to-focus. Bound chords (shift+n, …) win above.
-      if (!actionIds) {
+      if (actionIds.length === 0) {
         const typeChar = typeToFocusChar(event)
 
         if (typeChar && composerFocusKeysAllowed(event, 'type')) {
@@ -556,7 +557,7 @@ export function useKeybinds(deps: KeybindRuntimeDeps): void {
         return
       }
 
-      // Actions bound to the chord, in registration order. The first runs; a
+      // HUD-local actions first, then app-wide actions in registration order. A
       // `passthrough` action that declines hands the chord to the next.
       for (const actionId of actionIds) {
         if (isEditableTarget(event.target) && !actionAllowedInInput(actionId, combo)) {
@@ -635,7 +636,9 @@ export function useKeybinds(deps: KeybindRuntimeDeps): void {
     const onBlur = () => {
       releaseApprovalKey()
 
-      if ($capture.get()) {endCapture()}
+      if ($capture.get()) {
+        endCapture()
+      }
 
       if (switcherActive()) {
         closeSwitcher()
