@@ -1878,7 +1878,7 @@ export { Skeleton } from '@/components/ui/skeleton'
 export { Switch } from '@/components/ui/switch'
 export { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 export { Textarea } from '@/components/ui/textarea'
-export { Tip, Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
+export { OverflowTip, Tip, Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 export type { GatewayEventListener } from '@/contrib/events'
 /** Mount-scoped contribution: while the rendering component is mounted, its
  *  children render in the target area's slot; unmount disposes it. Use for
