@@ -87,7 +87,8 @@ export function registerHudShortcuts(ctx: PluginContext): void {
           data: {
             id: `hermes-bots.hud.switch.${slot}`,
             category: 'view',
-            defaults: [`mod+shift+${slot}`],
+            defaults: [`mod+alt+${slot}`],
+            hudOnly: true,
             label: slot === 1 ? ctx.i18n.t('hud.regularChat') : ctx.i18n.t('hud.botSlot', slot - 1),
             run: () => {
               void switchTo(slot).catch(error => host.notifyError(error, ctx.i18n.t('hud.switchFailed')))

@@ -3,11 +3,12 @@ import { createElement, type ReactNode } from 'react'
 import { MemoryRouter } from 'react-router'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-const { isHudWindow, primeRoster, cachedUnionRoster, openRosterBot } = vi.hoisted(() => ({
+const { isHudWindow, primeRoster, cachedUnionRoster, openRosterBot, switchProfileToSlot } = vi.hoisted(() => ({
   isHudWindow: vi.fn(() => true),
   primeRoster: vi.fn(async (): Promise<void> => undefined),
   cachedUnionRoster: vi.fn(),
-  openRosterBot: vi.fn()
+  openRosterBot: vi.fn(),
+  switchProfileToSlot: vi.fn()
 }))
 
 vi.mock('@/store/windows', async original => ({ ...(await original<object>()), isHudWindow }))
@@ -18,6 +19,7 @@ vi.mock('@/plugins/hermes-bots/data', async original => ({
   cachedUnionRoster
 }))
 vi.mock('@/plugins/hermes-bots/roster-actions', () => ({ openRosterBot }))
+vi.mock('@/store/profile', async original => ({ ...(await original<object>()), switchProfileToSlot }))
 
 import { sessionRoute } from '@/app/routes'
 import { $workspaceMode, setWorkspaceScope } from '@/components/pane-shell/workspace-scope'
@@ -29,7 +31,7 @@ import { BOTS_LOCALES } from '@/plugins/hermes-bots/i18n'
 import { getBotOpenGeneration } from '@/plugins/hermes-bots/shared'
 import type { RosterRow } from '@/plugins/hermes-bots/types'
 import { $freshDraftKey, onComposerDraftSyncRequest } from '@/store/composer'
-import { resetBinding, setBinding } from '@/store/keybinds'
+import { conflictsFor, resetBinding, setBinding } from '@/store/keybinds'
 import { $newChatProfile } from '@/store/profile'
 import { $selectedStoredSessionId, $sessionResumeRequest } from '@/store/session'
 import { deferred } from '@/test/deferred'
@@ -63,16 +65,18 @@ function press(slot: number, options: KeyboardEventInit = {}) {
     bubbles: true,
     cancelable: true,
     code: `Digit${slot}`,
-    key: ')!@#$%^&*('[slot],
+    key: String(slot),
     ctrlKey: !isMacPlatform(),
     metaKey: isMacPlatform(),
-    shiftKey: true,
+    altKey: true,
     ...options
   })
 
   act(() => {
     input.dispatchEvent(event)
   })
+
+  return event
 }
 
 beforeEach(() => {
@@ -124,6 +128,28 @@ afterEach(() => {
 })
 
 describe('HUD chat shortcuts through the shared keyboard dispatcher', () => {
+  it('gives the HUD its bot shortcuts while the main window keeps profile switching', async () => {
+    press(2)
+    await waitFor(() => expect(openRosterBot).toHaveBeenCalledWith(alpha))
+    expect(switchProfileToSlot).not.toHaveBeenCalled()
+
+    isHudWindow.mockReturnValue(false)
+    press(2)
+    expect(switchProfileToSlot).toHaveBeenCalledWith(11)
+    expect(openRosterBot).toHaveBeenCalledTimes(1)
+    expect(conflictsFor('hermes-bots.hud.switch.2', 'mod+alt+2')).not.toContain('profile.switch.11')
+    expect(conflictsFor('profile.switch.11', 'mod+alt+2')).not.toContain('hermes-bots.hud.switch.2')
+  })
+
+  it('leaves the old screenshot chords unclaimed', () => {
+    for (const slot of [3, 4, 5]) {
+      expect(press(slot, { altKey: false, shiftKey: true }).defaultPrevented).toBe(false)
+    }
+
+    expect(primeRoster).not.toHaveBeenCalled()
+    expect(openRosterBot).not.toHaveBeenCalled()
+  })
+
   it('opens stable bot slots while typing and returns to the original chat', async () => {
     const flush = vi.fn()
     cleanup.push(onComposerDraftSyncRequest(flush))
@@ -156,12 +182,12 @@ describe('HUD chat shortcuts through the shared keyboard dispatcher', () => {
     expect(primeRoster).not.toHaveBeenCalled()
     isHudWindow.mockReturnValue(true)
     press(2, { isComposing: true })
-    press(2, { shiftKey: false })
+    press(2, { altKey: false })
     expect(primeRoster).not.toHaveBeenCalled()
     setBinding('hermes-bots.hud.switch.2', ['mod+alt+shift+9'])
     press(2)
     expect(primeRoster).not.toHaveBeenCalled()
-    press(9, { altKey: true })
+    press(9, { shiftKey: true })
     await waitFor(() => expect(openRosterBot).toHaveBeenCalledWith(alpha))
     $freshDraftKey.set('other-draft')
     $newChatProfile.set('alpha')

@@ -58,17 +58,27 @@ payload. See [BUILDING.md](BUILDING.md) for package and release contracts.
 
 ## HUD chat shortcuts
 
-With the HUD focused, **Cmd+Shift+1** returns to your regular chat (including
-an unsent draft), and **Cmd+Shift+2** through **Cmd+Shift+9** open the first
-eight visible bots. Windows and Linux use **Ctrl** instead of **Cmd**.
+With the HUD focused, **Cmd+Option+1** (⌘⌥1) returns to your regular chat (including
+an unsent draft), and **Cmd+Option+2** through **Cmd+Option+9** open the first
+eight visible bots. Windows and Linux use **Ctrl+Alt+1–9**.
+In the main window, these keys keep their existing profile-switching behavior.
 Bot slots start in roster order and stay fixed for the HUD window's lifetime,
 so incoming messages cannot change their assignments. Empty or removed slots
 do nothing. Each bot opens its existing canonical Bot Chat.
 
-These shortcuts require the bundled Bots plugin and can be changed in
-**Settings → Keyboard Shortcuts** under the HUD actions.
-If macOS screenshot shortcuts use Cmd+Shift+3, 4, or 5, rebind the corresponding
-HUD actions to unused keys in those settings.
+These shortcuts require the bundled Bots plugin. To customize them:
+
+1. Open **Settings → Keyboard Shortcuts → Key bindings** (or press **Cmd+/**).
+2. Search for **HUD** and find **HUD: Return to regular chat** or
+   **HUD: Switch to bot 1**, **HUD: Switch to bot 2**, and so on.
+3. Click the displayed shortcut beside the action, then press your replacement
+   combination. It saves automatically; **Esc** cancels recording.
+
+If the HUD was already open while you edited bindings in the main window,
+restart Hermes so the HUD loads those saved changes.
+
+Existing custom bindings are preserved. Use an action's **Reset** button to
+adopt its new default. The defaults leave macOS screenshot shortcuts unchanged.
 
 ## Screenshot shortcut (macOS)
 

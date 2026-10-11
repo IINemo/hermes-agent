@@ -221,7 +221,8 @@ export function resetAllBindings(): void {
 
 // Other actions that already use `combo` (excluding `actionId` itself). A
 // `passthrough` action layered over a later one shares the chord by design,
-// so that pair is not reported from either side.
+// so that pair is not reported from either side. HUD-only actions similarly
+// take precedence in the HUD while app-wide actions keep other windows.
 export function conflictsFor(actionId: string, combo: string): string[] {
   const bindings = $bindings.get()
   const actions = allKeybindActions()
@@ -230,6 +231,10 @@ export function conflictsFor(actionId: string, combo: string): string[] {
   return actions
     .filter((action, index) => {
       if (index === self || !bindingsFor(action.id, bindings).includes(combo)) {
+        return false
+      }
+
+      if (Boolean(action.hudOnly) !== Boolean(actions[self]?.hudOnly)) {
         return false
       }
 

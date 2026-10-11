@@ -26,6 +26,8 @@ export interface KeybindActionMeta {
   defaults: readonly string[]
   /** Display label for CONTRIBUTED actions (built-ins use i18n). */
   label?: string
+  /** Active only in the HUD, ahead of app-wide actions on the same chord. */
+  hudOnly?: true
   /**
    * The handler may decline (return `false`) when its context does not
    * apply, handing the chord to the next action bound to it. Sharing a combo
@@ -278,6 +280,8 @@ export interface KeybindContribution {
   /** Default combos (canonical form, e.g. `mod+shift+\\`). Empty = unbound. */
   defaults?: readonly string[]
   label: string
+  /** Active only in the HUD, ahead of app-wide actions on the same chord. */
+  hudOnly?: true
   run: () => void
 }
 
@@ -300,13 +304,32 @@ export function allKeybindActions(contributions?: readonly Contribution[]): Keyb
       id: k.id,
       category: k.category ?? ('view' as const),
       defaults: k.defaults ?? [],
-      label: k.label
+      label: k.label,
+      hudOnly: k.hudOnly
     }))
   ]
 }
 
 export function keybindAction(id: string): KeybindActionMeta | undefined {
   return ACTION_BY_ID.get(id) ?? allKeybindActions().find(action => action.id === id)
+}
+
+/** HUD bindings own their chords in the HUD; other windows keep app-wide bindings. */
+export function keybindActionsForWindow(ids: readonly string[] | undefined, hud: boolean): string[] {
+  const local: string[] = []
+  const appWide: string[] = []
+
+  for (const id of ids ?? []) {
+    if (keybindAction(id)?.hudOnly) {
+      if (hud) {
+        local.push(id)
+      }
+    } else {
+      appWide.push(id)
+    }
+  }
+
+  return [...local, ...appWide]
 }
 
 /** True when `combo` carries a modifier beyond Shift (mod, ctrl, or alt). */
