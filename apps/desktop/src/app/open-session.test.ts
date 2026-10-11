@@ -12,6 +12,7 @@ const focusedSessionWorkspaceScope = vi.fn<() => { workspaceMode: 'bots' | 'sess
 
 const openSessionInNewWindow = vi.fn()
 const canOpenSessionWindow = vi.fn(() => true)
+const isHudWindow = vi.fn(() => false)
 const workspaceIsPageGet = vi.fn(() => false)
 
 vi.mock('@/store/session-states', () => ({
@@ -27,6 +28,7 @@ vi.mock('@/store/session-states', () => ({
 
 vi.mock('@/store/windows', () => ({
   canOpenSessionWindow: () => canOpenSessionWindow(),
+  isHudWindow: () => isHudWindow(),
   openSessionInNewWindow: (...args: unknown[]) => openSessionInNewWindow(...args)
 }))
 
@@ -75,6 +77,7 @@ describe('openSession', () => {
     openSessionTile.mockReset()
     openSessionInNewWindow.mockReset()
     canOpenSessionWindow.mockReturnValue(true)
+    isHudWindow.mockReturnValue(false)
     workspaceIsPageGet.mockReturnValue(false)
     reuseBlankDraftTile.mockReset()
     setSessionTileWorkspaceScope.mockReset()
@@ -90,6 +93,19 @@ describe('openSession', () => {
     openSession('s1', navigate)
     expect(focusOpenSession).toHaveBeenCalledWith('s1', { workspaceMode: 'sessions' })
     expect(navigate).not.toHaveBeenCalled()
+    expect(openSessionTile).not.toHaveBeenCalled()
+  })
+
+  it('HUD in-place opens route the visible chat even when a retained tile exists', () => {
+    isHudWindow.mockReturnValue(true)
+    focusOpenSession.mockReturnValue('tile')
+    const scope = { workspaceMode: 'bots' as const, workspaceOwnerKey: 'bot:local::alpha' }
+
+    openSession('bot-chat', navigate, 'in-place', scope)
+
+    expect(navigate).toHaveBeenCalledWith('/c/bot-chat')
+    expect(setSessionTileWorkspaceScope).toHaveBeenCalledWith('bot-chat', scope)
+    expect(focusOpenSession).not.toHaveBeenCalled()
     expect(openSessionTile).not.toHaveBeenCalled()
   })
 

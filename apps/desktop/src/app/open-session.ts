@@ -26,7 +26,7 @@ import {
   reuseBlankDraftTile,
   setSessionTileWorkspaceScope
 } from '@/store/session-states'
-import { canOpenSessionWindow, openSessionInNewWindow } from '@/store/windows'
+import { canOpenSessionWindow, isHudWindow, openSessionInNewWindow } from '@/store/windows'
 
 import { $workspaceIsPage, sessionRoute } from './routes'
 
@@ -128,7 +128,9 @@ export function openSession(
   setSessionTileWorkspaceScope(storedSessionId, workspaceScope)
   const botWorkspaceScope = workspaceScope.workspaceMode === 'bots' ? workspaceScope : undefined
 
-  let resolved: OpenSessionIntent = intent
+  // The HUD renders only the routed chat, never the retained pane tree. A
+  // matching tile in that tree cannot satisfy an in-place open here.
+  let resolved: OpenSessionIntent = intent === 'in-place' && isHudWindow() ? 'main' : intent
 
   if (resolved === 'window') {
     if (canOpenSessionWindow()) {
