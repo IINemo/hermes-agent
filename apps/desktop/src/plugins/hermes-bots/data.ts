@@ -904,7 +904,10 @@ export function useRoster({ poll = true }: { poll?: boolean } = {}) {
  *  the ACTIVE gateway for profiles.list, which cannot enumerate them (#94018).
  *  One fetch, no polling — the pane owns the refresh while open. Never throws. */
 export async function primeRoster(): Promise<void> {
-  const connectionId = String(host.state.connectionId?.get?.() || host.activeConnectionId?.() || 'local')
+  // null is a real local-window identity, shared with useRoster and the
+  // connection guard in fetchRosterSnapshot. Replacing it with "local"
+  // makes a cold HUD reject its own request before it ever reaches the gateway.
+  const connectionId = host.state.connectionId?.get?.() ?? null
 
   try {
     await queryClient.fetchQuery({
@@ -931,7 +934,7 @@ export function cachedUnionRoster(): RosterSnapshot | null {
   }
 
   try {
-    const connectionId = String(host.state.connectionId?.get?.() || host.activeConnectionId?.() || 'local')
+    const connectionId = host.state.connectionId?.get?.() ?? null
     const exact = queryClient.getQueryData<RosterSnapshot>([...ROSTER_KEY, connectionId])
 
     if (Array.isArray(exact?.profiles)) {

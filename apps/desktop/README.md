@@ -62,9 +62,9 @@ With the HUD focused, **Cmd+Option+1** (⌘⌥1) returns to your regular chat (i
 an unsent draft), and **Cmd+Option+2** through **Cmd+Option+9** open the first
 eight visible bots. Windows and Linux use **Ctrl+Alt+1–9**.
 In the main window, these keys keep their existing profile-switching behavior.
-The HUD shows the active bot's avatar and name beside the input, or **Regular chat**
-for your normal conversation. Remote bots also show their connection name; hover
-over a truncated label to see it in full.
+Click the avatar/name beside the HUD input to choose any visible agent or return
+to **Regular chat**. Regular chat uses a compact chat-icon button. The picker
+shows remote connection names and includes agents beyond the eight shortcut slots.
 Bot slots start in roster order and stay fixed for the HUD window's lifetime,
 so incoming messages cannot change their assignments. Empty or removed slots
 do nothing. Each bot opens its existing canonical Bot Chat.

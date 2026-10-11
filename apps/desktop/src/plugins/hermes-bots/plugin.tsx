@@ -120,11 +120,11 @@ export default {
     // writes through.
     loadBotSections()
     const disposeLocales = ctx.i18n.register(BOTS_LOCALES)
-    registerHudShortcuts(ctx)
+    const selectHudChat = registerHudShortcuts(ctx)
     ctx.register({
       id: 'hud-conversation',
       area: COMPOSER_AREAS.leading,
-      render: () => <HudConversationIndicator />
+      render: () => <HudConversationIndicator onSelect={selectHudChat} />
     })
     setGroupChatSyncDisposed(false)
     startFaceClock()

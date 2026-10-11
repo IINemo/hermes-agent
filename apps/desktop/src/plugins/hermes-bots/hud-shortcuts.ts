@@ -9,8 +9,14 @@ import { sortRosterBots } from './roster-pane-derivation'
 import { bumpBotOpenGeneration } from './shared'
 import type { RosterRow } from './types'
 
+export type HudChatTarget = number | RosterRow
+
+export function visibleHudBots(roster: RosterRow[], meta = $botMeta.get()): RosterRow[] {
+  return preferReachableSameNameRows(sortRosterBots(roster, meta).roster.filter(bot => !isBotHidden(bot, meta)))
+}
+
 /** Rebindable HUD-only navigation, using the same canonical open as a bot row. */
-export function registerHudShortcuts(ctx: PluginContext): void {
+export function registerHudShortcuts(ctx: PluginContext): ((target: HudChatTarget) => void) | undefined {
   if (!host.hud) {
     return
   }
@@ -28,7 +34,7 @@ export function registerHudShortcuts(ctx: PluginContext): void {
     }
   }
 
-  const switchTo = async (slot: number) => {
+  const switchTo = async (target: HudChatTarget) => {
     if (!host.hud?.isActive()) {
       return
     }
@@ -36,7 +42,7 @@ export function registerHudShortcuts(ctx: PluginContext): void {
     const request = ++generation
     bumpBotOpenGeneration()
 
-    if (slot === 1) {
+    if (target === 1) {
       if (!cachedUnionRoster()) {
         await primeRoster()
       }
@@ -57,16 +63,18 @@ export function registerHudShortcuts(ctx: PluginContext): void {
       return
     }
 
-    const roster = cachedUnionRoster()?.profiles ?? []
-    const meta = $botMeta.get()
+    const roster = cachedUnionRoster()?.profiles
 
-    const visible = preferReachableSameNameRows(
-      sortRosterBots(roster, meta).roster.filter(bot => !isBotHidden(bot, meta))
-    )
+    if (!roster) {
+      throw new Error(ctx.i18n.t('hud.rosterUnavailable'))
+    }
+
+    const visible = visibleHudBots(roster)
 
     const keys = visible.map(botRosterKey)
     slots = [...slots, ...keys.filter(key => !slots.includes(key))]
-    const bot = visible.find(row => botRosterKey(row) === slots[slot - 2])
+    const key = typeof target === 'number' ? slots[target - 2] : botRosterKey(target)
+    const bot = visible.find(row => botRosterKey(row) === key)
 
     if (!bot) {
       return
@@ -74,6 +82,12 @@ export function registerHudShortcuts(ctx: PluginContext): void {
 
     rememberRegularChat(roster)
     await openRosterBot(bot)
+  }
+
+  // Both the picker and numbered keys share cancellation, draft preservation,
+  // and canonical opening. A picker selection also cancels an older keypress.
+  const selectChat = (target: HudChatTarget) => {
+    void switchTo(target).catch(error => host.notifyError(error, ctx.i18n.t('hud.switchFailed')))
   }
 
   const registerLabels = () =>
@@ -90,9 +104,7 @@ export function registerHudShortcuts(ctx: PluginContext): void {
             defaults: [`mod+alt+${slot}`],
             hudOnly: true,
             label: slot === 1 ? ctx.i18n.t('hud.regularChat') : ctx.i18n.t('hud.botSlot', slot - 1),
-            run: () => {
-              void switchTo(slot).catch(error => host.notifyError(error, ctx.i18n.t('hud.switchFailed')))
-            }
+            run: () => selectChat(slot)
           } satisfies KeybindContribution
         }
       })
@@ -106,4 +118,6 @@ export function registerHudShortcuts(ctx: PluginContext): void {
   ctx.onDispose(() => {
     generation += 1
   })
+
+  return selectChat
 }
