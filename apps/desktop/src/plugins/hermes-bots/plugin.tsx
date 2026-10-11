@@ -66,6 +66,7 @@ import {
   updateGroupChat
 } from './group-chat'
 import { groupWorkspaceOwnerKey } from './group-membership'
+import { registerHudShortcuts } from './hud-shortcuts'
 import { annotateOrphanedGroupChatMembers } from './hygiene'
 import { BOTS_LOCALES } from './i18n'
 import { displayName } from './labels'
@@ -118,6 +119,7 @@ export default {
     // writes through.
     loadBotSections()
     const disposeLocales = ctx.i18n.register(BOTS_LOCALES)
+    registerHudShortcuts(ctx)
     setGroupChatSyncDisposed(false)
     startFaceClock()
     // The cross-connection relay rides every gateway socket this Desktop

@@ -32,9 +32,15 @@
 import { type PluginLocaleBundles, type PluginTranslate, usePluginI18n } from '@hermes/plugin-sdk'
 import { useMemo } from 'react'
 
+import { bind, type Bound } from './i18n-bind'
 import { getPluginCtx } from './shared'
 
 type BotsMessages = {
+  hud: {
+    regularChat: string
+    botSlot: (slot: number) => string
+    switchFailed: string
+  }
   /** Left rail: the bot + group-chat roster. */
   editor: {
     fullConfigHint: string
@@ -484,6 +490,11 @@ type BotsMessages = {
 }
 
 const en: BotsMessages = {
+  hud: {
+    regularChat: 'HUD: Return to regular chat',
+    switchFailed: 'Could not switch HUD chat',
+    botSlot: slot => `HUD: Switch to bot ${slot}`
+  },
   editor: {
     fullConfigHint: 'Full configuration needs a newer gateway (restart it after updating Hermes).',
     liveCapabilities: 'Capabilities (applies immediately — skills, tools, MCP)',
@@ -920,6 +931,11 @@ const en: BotsMessages = {
 }
 
 const ja: BotsMessages = {
+  hud: {
+    regularChat: 'HUD：通常のチャットに戻る',
+    switchFailed: 'HUDのチャットを切り替えられませんでした',
+    botSlot: slot => `HUD：ボット${slot}に切り替え`
+  },
   editor: {
     fullConfigHint: 'すべての設定を使うには新しいゲートウェイが必要です（Hermes 更新後に再起動してください）。',
     liveCapabilities: '機能（即時適用 — スキル、ツール、MCP）',
@@ -1360,6 +1376,11 @@ const ja: BotsMessages = {
 }
 
 const zh: BotsMessages = {
+  hud: {
+    regularChat: 'HUD：返回普通聊天',
+    switchFailed: '无法切换 HUD 聊天',
+    botSlot: slot => `HUD：切换到机器人 ${slot}`
+  },
   editor: {
     fullConfigHint: '完整配置需要更新网关（更新 Hermes 后请重启网关）。',
     liveCapabilities: '功能（立即生效 — 技能、工具、MCP）',
@@ -1784,6 +1805,11 @@ const zh: BotsMessages = {
 }
 
 const zhHant: BotsMessages = {
+  hud: {
+    regularChat: 'HUD：返回一般聊天',
+    switchFailed: '無法切換 HUD 聊天',
+    botSlot: slot => `HUD：切換至機器人 ${slot}`
+  },
   editor: {
     fullConfigHint: '完整設定需要更新閘道（更新 Hermes 後請重新啟動閘道）。',
     liveCapabilities: '功能（立即生效 — 技能、工具、MCP）',
@@ -2209,32 +2235,6 @@ const zhHant: BotsMessages = {
 
 /** Registered via `ctx.i18n.register` at plugin load (disposer tracked). */
 export const BOTS_LOCALES: PluginLocaleBundles = { en, ja, zh, 'zh-hant': zhHant }
-
-// Bind the message SHAPE to a plugin translator: string leaves resolve now,
-// function leaves forward their args through t(path, …).
-type Bound<T> = {
-  [K in keyof T]: T[K] extends (...args: infer A) => string
-    ? (...args: A) => string
-    : T[K] extends object
-      ? Bound<T[K]>
-      : string
-}
-
-function bind<T extends object>(t: PluginTranslate, template: T, prefix = ''): Bound<T> {
-  const out = {} as Record<string, unknown>
-
-  for (const [key, value] of Object.entries(template)) {
-    const path = prefix ? `${prefix}.${key}` : key
-    out[key] =
-      typeof value === 'function'
-        ? (...args: unknown[]) => t(path, ...args)
-        : value && typeof value === 'object'
-          ? bind(t, value as object, path)
-          : t(path)
-  }
-
-  return out as Bound<T>
-}
 
 export type BotsText = Bound<BotsMessages>
 

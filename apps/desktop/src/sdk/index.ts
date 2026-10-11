@@ -101,7 +101,6 @@ import {
   $sessionStates,
   $sessionTiles,
   dropTilesForProfile,
-  focusWorkspaceOwnerSessionTile,
   sessionTileDelegate
 } from '@/store/session-states'
 import { runGatewayRestart } from '@/store/system-actions'
@@ -109,6 +108,7 @@ import type { PaginatedSessions, UsageStats } from '@/types/hermes'
 
 import { pluginDecisions, profiles, skills, toolsets } from './bridge'
 import { composerHost } from './composer'
+import { focusVisibleWorkspaceSession, hudHost } from './hud'
 import { i18nHost } from './i18n'
 import { planPluginOpenSession } from './plugin-open-session-plan'
 import { sessionsHost } from './sessions'
@@ -668,6 +668,8 @@ async function awaitProfileActivation(
 }
 
 export const host = {
+  /** HUD conversation switching without changing the main window's layout. */
+  hud: hudHost,
   state: {
     /** Runtime id of the active chat session (null on a fresh draft). */
     activeSessionId: readonlyAtom<null | string>($activeSessionId),
@@ -1415,11 +1417,7 @@ export const host = {
    *  and fronting it pinned the roster click to a stale finished session
    *  forever. Tiles the probe rejects are discarded (never fronted), so the
    *  caller falls through to its authoritative open path. */
-  focusOpenWorkspaceSession: (
-    workspaceOwnerKey: string,
-    isStaleTile?: (tile: { storedSessionId: string; workspaceTabTitle?: string }) => boolean,
-    onlyStoredIds?: readonly string[]
-  ): null | string => focusWorkspaceOwnerSessionTile(workspaceOwnerKey, isStaleTile, onlyStoredIds),
+  focusOpenWorkspaceSession: focusVisibleWorkspaceSession,
 
   /** Reactive on-screen visibility of a contributed pane: true while it is in
    *  the layout tree, not dismissed/hidden, its zone un-minimized, AND holding
