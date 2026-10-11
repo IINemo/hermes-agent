@@ -701,6 +701,20 @@ describe('the roster only caches rows from the connection it is keyed under', ()
 })
 
 describe('a launch that never opens the Bots pane', () => {
+  it('primes a local window without a connection id using the same cache as the HUD', async () => {
+    queryClient.clear()
+    hostMock.state.connectionId.get.mockReturnValue(null as unknown as string)
+    hostMock.request.mockResolvedValue({ profiles: [{ name: 'writer', canonical_session: { id: 'writer-chat' } }] })
+    hostMock.agents.mockResolvedValue({ agents: [] })
+
+    await primeRoster()
+
+    expect(cachedUnionRoster()?.profiles?.map(row => row.name)).toEqual(['writer'])
+    expect(queryClient.getQueryData([...ROSTER_KEY, null])).toMatchObject({
+      profiles: [{ name: 'writer', canonical_session: { id: 'writer-chat' } }]
+    })
+  })
+
   it('names a remote bot by what its backend reports, not a stale cached title', async () => {
     queryClient.clear()
     $botMeta.set({ 'vps::default': { title: 'Agent B' } })
