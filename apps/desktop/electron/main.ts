@@ -14555,6 +14555,7 @@ function hudUrl(sessionId, profile) {
 // out (see hudSessionId).
 function broadcastHudState(open, returnToMain = false) {
   hudPopup.changed(open)
+
   const payload = {
     open,
     sessionId: hudSessionId,
