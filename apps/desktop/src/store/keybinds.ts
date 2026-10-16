@@ -62,7 +62,9 @@ function persistBindings(bindings: KeybindBindings): void {
   const diff: KeybindBindings = {}
 
   for (const action of allKeybindActions()) {
-    const current = bindings[action.id] ?? []
+    // Plugins register after loadBindings(), so absence in the atom does not
+    // mean cleared: resolve their saved override or default just as dispatch does.
+    const current = bindingsFor(action.id, bindings)
 
     if (!arraysEqual(current, defaults[action.id] ?? [])) {
       diff[action.id] = current

@@ -59,6 +59,38 @@ describe('keybinds store persist vs late-registered contributed actions', () => 
     expect(bindingsFor('demo.late')).toEqual(['mod+alt+l'])
   })
 
+  it.each([undefined, ['mod+ctrl+2'], []])(
+    'preserves a late action binding across unrelated writes and reloads (%j)',
+    async saved => {
+      if (saved) {
+        window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ 'demo.late': saved }))
+      }
+
+      const { bindingsFor, setBinding } = await import('./keybinds')
+      const { registry } = await import('@/contrib/registry')
+      const { KEYBINDS_AREA } = await import('@/lib/keybinds/actions')
+
+      const contribution = {
+        ...DEMO_CONTRIBUTION,
+        area: KEYBINDS_AREA,
+        data: { ...DEMO_CONTRIBUTION.data, defaults: ['mod+alt+2'] }
+      }
+
+      registry.register(contribution)
+      const expected = saved ?? ['mod+alt+2']
+      expect(bindingsFor('demo.late')).toEqual(expected)
+
+      setBinding('session.new', ['mod+shift+n'])
+      expect(storedDiff()['demo.late']).toEqual(saved)
+
+      vi.resetModules()
+      const reloaded = await import('./keybinds')
+      const nextRegistry = await import('@/contrib/registry')
+      nextRegistry.registry.register(contribution)
+      expect(reloaded.bindingsFor('demo.late')).toEqual(expected)
+    }
+  )
+
   it('keeps an explicitly cleared sidebar binding empty so mod+b can be unbound', async () => {
     const { $comboIndex, bindingsFor, setBinding } = await import('./keybinds')
 
