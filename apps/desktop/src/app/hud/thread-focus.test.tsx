@@ -62,7 +62,7 @@ it('allows transcript selection and holds the band after mouse-up until the sele
 
 it('keeps the transcript engaged when its Copy button takes focus and copies through the desktop bridge', async () => {
   const originalDesktop = window.hermesDesktop
-  const writeClipboard = vi.fn().mockResolvedValue(undefined)
+  const writeClipboard = vi.fn().mockResolvedValue(true)
   const setFrost = vi.fn()
   window.hermesDesktop = { hud: { setFrost }, writeClipboard } as unknown as Window['hermesDesktop']
 

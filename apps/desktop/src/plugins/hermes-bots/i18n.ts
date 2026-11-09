@@ -33,6 +33,7 @@ import { type PluginLocaleBundles, type PluginTranslate, usePluginI18n } from '@
 import { useMemo } from 'react'
 
 import { CANONICAL_GROUP_LOCALES } from './canonical-group-locales'
+import { CROSS_GATEWAY_GROUP_LOCALES } from './cross-gateway-locales'
 import { HUD_MESSAGES } from './hud-i18n'
 import { bind, type Bound } from './i18n-bind'
 import { type BotsMessages } from './i18n-messages'
@@ -41,6 +42,7 @@ import { getPluginCtx } from './shared'
 const en: BotsMessages = {
   hud: HUD_MESSAGES.en,
   canonical: CANONICAL_GROUP_LOCALES.en,
+  crossGateway: CROSS_GATEWAY_GROUP_LOCALES.en,
   editor: {
     fullConfigHint: 'Full configuration needs a newer gateway (restart it after updating Hermes).',
     liveCapabilities: 'Capabilities (applies immediately — skills, tools, MCP)',
@@ -183,6 +185,7 @@ const en: BotsMessages = {
     descriptionHint: 'Leave blank to generate from the bot’s name and description.',
     newChatWith: 'New chat with this bot',
     openBotChat: 'Open Bot Chat',
+    openBotChatInNewTab: 'Open Bot Chat in new tab',
     openingChat: 'Opening chat…',
     pinToTop: 'Pin to top',
     unpin: 'Unpin',
@@ -411,7 +414,8 @@ const en: BotsMessages = {
     youControl: 'You are in control',
     otherControls: 'Another viewer is in control',
     agentControls: 'Bot is in control',
-    controlTaken: 'Another viewer took control. Watching only.'
+    controlTaken: 'Another viewer took control. Watching only.',
+    needsHttps: 'Bot screens need a secure connection. Open the Webapp over HTTPS, or through an SSH tunnel to 127.0.0.1, to view this one.'
   },
   cron: {
     untitled: 'Untitled job',
@@ -482,6 +486,7 @@ const en: BotsMessages = {
 const ja: BotsMessages = {
   hud: HUD_MESSAGES.ja,
   canonical: CANONICAL_GROUP_LOCALES.ja,
+  crossGateway: CROSS_GATEWAY_GROUP_LOCALES.ja,
   editor: {
     fullConfigHint: 'すべての設定を使うには新しいゲートウェイが必要です（Hermes 更新後に再起動してください）。',
     liveCapabilities: '機能（即時適用 — スキル、ツール、MCP）',
@@ -625,6 +630,7 @@ const ja: BotsMessages = {
     descriptionHint: '空欄のままにすると、ボットの名前と説明から生成します。',
     newChatWith: 'このボットと新しいチャット',
     openBotChat: 'ボットチャットを開く',
+    openBotChatInNewTab: 'ボットチャットを新しいタブで開く',
     openingChat: 'チャットを開いています…',
     pinToTop: '先頭にピン留め',
     unpin: 'ピン留めを解除',
@@ -856,7 +862,8 @@ const ja: BotsMessages = {
     youControl: 'あなたが操作中',
     otherControls: '別のビューアが操作中',
     agentControls: 'ボットが操作中',
-    controlTaken: '別のビューアが操作を引き継ぎました。閲覧のみ。'
+    controlTaken: '別のビューアが操作を引き継ぎました。閲覧のみ。',
+    needsHttps: 'ボットの画面には安全な接続が必要です。表示するには、Webapp を HTTPS か 127.0.0.1 への SSH トンネル経由で開いてください。'
   },
   cron: {
     untitled: '無題のジョブ',
@@ -927,6 +934,7 @@ const ja: BotsMessages = {
 const zh: BotsMessages = {
   hud: HUD_MESSAGES.zh,
   canonical: CANONICAL_GROUP_LOCALES.zh,
+  crossGateway: CROSS_GATEWAY_GROUP_LOCALES.zh,
   editor: {
     fullConfigHint: '完整配置需要更新网关（更新 Hermes 后请重启网关）。',
     liveCapabilities: '功能（立即生效 — 技能、工具、MCP）',
@@ -1060,6 +1068,7 @@ const zh: BotsMessages = {
     descriptionHint: '留空则根据机器人的名称和描述生成。',
     newChatWith: '与此机器人开新聊天',
     openBotChat: '打开机器人聊天',
+    openBotChatInNewTab: '在新标签页中打开机器人聊天',
     openingChat: '正在打开聊天…',
     pinToTop: '置顶',
     unpin: '取消置顶',
@@ -1284,7 +1293,8 @@ const zh: BotsMessages = {
     youControl: '你正在控制',
     otherControls: '另一位查看者正在控制',
     agentControls: '机器人正在控制',
-    controlTaken: '另一位查看者已接管控制。仅可观看。'
+    controlTaken: '另一位查看者已接管控制。仅可观看。',
+    needsHttps: '机器人屏幕需要安全连接。请通过 HTTPS 或到 127.0.0.1 的 SSH 隧道打开 Webapp 后查看。'
   },
   cron: {
     untitled: '未命名任务',
@@ -1355,6 +1365,7 @@ const zh: BotsMessages = {
 const zhHant: BotsMessages = {
   hud: HUD_MESSAGES.zhHant,
   canonical: CANONICAL_GROUP_LOCALES['zh-hant'],
+  crossGateway: CROSS_GATEWAY_GROUP_LOCALES['zh-hant'],
   editor: {
     fullConfigHint: '完整設定需要更新閘道（更新 Hermes 後請重新啟動閘道）。',
     liveCapabilities: '功能（立即生效 — 技能、工具、MCP）',
@@ -1488,6 +1499,7 @@ const zhHant: BotsMessages = {
     descriptionHint: '留空則依機器人的名稱和描述產生。',
     newChatWith: '與此機器人開新聊天',
     openBotChat: '開啟機器人聊天',
+    openBotChatInNewTab: '在新分頁中開啟機器人聊天',
     openingChat: '正在開啟聊天…',
     pinToTop: '釘選到頂端',
     unpin: '取消釘選',
@@ -1712,7 +1724,8 @@ const zhHant: BotsMessages = {
     youControl: '你正在控制',
     otherControls: '另一位檢視者正在控制',
     agentControls: '機器人正在控制',
-    controlTaken: '另一位檢視者已接手控制。僅可觀看。'
+    controlTaken: '另一位檢視者已接手控制。僅可觀看。',
+    needsHttps: '機器人螢幕需要安全連線。請透過 HTTPS 或到 127.0.0.1 的 SSH 通道開啟 Webapp 後檢視。'
   },
   cron: {
     untitled: '未命名工作',
@@ -1786,11 +1799,11 @@ export const BOTS_LOCALES: PluginLocaleBundles = {
   ja,
   zh,
   'zh-hant': zhHant,
-  ar: { canonical: CANONICAL_GROUP_LOCALES.ar },
-  ru: { canonical: CANONICAL_GROUP_LOCALES.ru },
-  fr: { canonical: CANONICAL_GROUP_LOCALES.fr },
-  de: { canonical: CANONICAL_GROUP_LOCALES.de },
-  es: { canonical: CANONICAL_GROUP_LOCALES.es }
+  ar: { canonical: CANONICAL_GROUP_LOCALES.ar, crossGateway: CROSS_GATEWAY_GROUP_LOCALES.ar },
+  ru: { canonical: CANONICAL_GROUP_LOCALES.ru, crossGateway: CROSS_GATEWAY_GROUP_LOCALES.ru },
+  fr: { canonical: CANONICAL_GROUP_LOCALES.fr, crossGateway: CROSS_GATEWAY_GROUP_LOCALES.fr },
+  de: { canonical: CANONICAL_GROUP_LOCALES.de, crossGateway: CROSS_GATEWAY_GROUP_LOCALES.de },
+  es: { canonical: CANONICAL_GROUP_LOCALES.es, crossGateway: CROSS_GATEWAY_GROUP_LOCALES.es }
 }
 
 export type BotsText = Bound<BotsMessages>
