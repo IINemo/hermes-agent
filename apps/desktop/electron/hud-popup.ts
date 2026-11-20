@@ -1,6 +1,11 @@
-interface HudPopupWindow {
+interface HudPopupWindow extends HiddenAppWindow {
   show(): void
   focus(): void
+}
+
+interface HiddenAppWindow {
+  isDestroyed(): boolean
+  hide(): void
 }
 
 /** Hiding preserves the live chat, reading position, and native geometry. */
@@ -26,11 +31,13 @@ export function dismissHudPopup(
 export function createHudPopup({
   open,
   dismiss,
-  canToggle
+  canToggle,
+  getAppHiddenWindows
 }: {
   open: () => void
   dismiss: () => void
   canToggle: () => boolean
+  getAppHiddenWindows: () => readonly HiddenAppWindow[]
 }) {
   let requestedOpen = false
 
@@ -51,6 +58,14 @@ export function createHudPopup({
     },
     reveal(win: HudPopupWindow) {
       if (requestedOpen) {
+        // macOS restores every app-hidden window when show/focus unhides the app.
+        // Order peers out first so summoning the HUD does not restore them too.
+        for (const hidden of getAppHiddenWindows()) {
+          if (hidden !== win && !hidden.isDestroyed()) {
+            hidden.hide()
+          }
+        }
+
         win.show()
         win.focus()
       }

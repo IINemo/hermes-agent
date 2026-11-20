@@ -2029,10 +2029,6 @@ export interface Translations extends NoticeTranslations {
       openLog: string
       actionLog: string
       alreadyInstalled: (name: string) => string
-      pickerTitle: string
-      pickerBrowse: string
-      pickerHide: string
-      pickerHint: string
       loadFailed: string
       previewFailed: string
       scanFailed: string
@@ -3950,6 +3946,8 @@ export interface Translations extends NoticeTranslations {
       branchNewChat: string
       react: string
       dismissError: string
+      /** A reply paused for an automatic continuation (store/paused-replies.ts). */
+      responseContinuing: string
       responseStopped: string
       /** Greyed notice on a safety-refused turn kept for display, used when the
        *  backend sent none in display_metadata.content_refused.notice. */
