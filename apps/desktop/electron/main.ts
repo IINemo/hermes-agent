@@ -325,7 +325,7 @@ import { applyHudResetBounds, defaultHudBounds } from './hud-geometry'
 import { registerHudIpc } from './hud-ipc'
 import { installHudModifierTap } from './hud-modifier'
 import { applyHudElectronOverlay, promoteHudOverlay } from './hud-overlay'
-import { createHudPopup, dismissHudPopup } from './hud-popup'
+import { createHudPopup, dismissHudPopup, hudPopupWindowType } from './hud-popup'
 import { installHudShortcut } from './hud-shortcut'
 import { snapHudBounds } from './hud-snap'
 import { createHudSnapShortcut } from './hud-snap-shortcut'
@@ -5523,7 +5523,7 @@ async function saveImageFromUrl(rawUrl) {
     // Downloads directory to offer.
   }
 
-  const result = await dialog.showSaveDialog(mainWindow, {
+  const result = await dialog.showSaveDialog(hudIpc.dialogParent(mainWindow), {
     title: 'Save Image',
     defaultPath: downloadsDir ? path.join(downloadsDir, fallbackName) : fallbackName,
     filters: [
@@ -7397,7 +7397,7 @@ async function saveGatewayFile(payload: GatewayFileSavePayload = {}): Promise<Ga
 
   const deps: GatewayFileSaveDeps = {
     showSaveDialog: (options: GatewaySaveDialogOptions): Promise<GatewaySaveDialogResult> =>
-      dialog.showSaveDialog(mainWindow, options)
+      dialog.showSaveDialog(hudIpc.dialogParent(mainWindow), options)
   }
 
   return saveGatewayDownload(requestPaths, ctx, {
@@ -12750,12 +12750,12 @@ function spawnHudWindow(sessionId, profile) {
     minimizable: false,
     maximizable: false,
     fullscreenable: false,
-    // Keep the interactive macOS HUD as an ordinary NSWindow. NSPanel defaults
-    // hidesOnDeactivate to true, which removes the HUD while the user works in
-    // another app; the floating/all-spaces setup below supplies overlay behavior.
+    // Windows/Linux keep the helper out of the taskbar/alt-tab list; macOS
+    // makes it a non-activating panel instead (see hudPopupWindowType).
     skipTaskbar: !IS_MAC,
     hasShadow: false,
     alwaysOnTop: true,
+    type: hudPopupWindowType(process.platform),
     // Clips the vibrancy layer to the HUD's silhouette rather than a hard
     // rectangle — the frost stops where the window's corners do.
     roundedCorners: true,
@@ -15968,7 +15968,7 @@ ipcMain.handle('hermes:selectPaths', async (_event, options: any = {}) => {
     }
   }
 
-  const result = await dialog.showOpenDialog(mainWindow, {
+  const result = await dialog.showOpenDialog(hudIpc.dialogParent(mainWindow), {
     title: options?.title || 'Add context',
     defaultPath: resolvedDefaultPath,
     properties: properties as any,
@@ -15988,7 +15988,7 @@ registerClipboardTextIpc(ipcMain, clipboard)
 // Save dialogs: the path picker (profile export) and /save's main-process write (save-text-file.ts).
 registerSaveDialogIpc(ipcMain, {
   defaultDir: () => app.getPath('documents'),
-  showSaveDialog: options => dialog.showSaveDialog(mainWindow, options)
+  showSaveDialog: options => dialog.showSaveDialog(hudIpc.dialogParent(mainWindow), options)
 })
 
 ipcMain.handle('hermes:saveGatewayFile', (_event, payload) => saveGatewayFile(payload))

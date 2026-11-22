@@ -2,7 +2,7 @@
 // from main.ts; the HUD window handle and session-id latch stay injected
 // because main.ts owns the window lifecycle and the close broadcast reads the
 // latch when handing the session back to the app window.
-import { type BrowserWindow, ipcMain, screen } from 'electron'
+import { app, type BrowserWindow, ipcMain, screen } from 'electron'
 
 import { createHudDragSession } from './hud-drag'
 import { normalizeHudResizeBounds } from './hud-geometry'
@@ -297,13 +297,38 @@ export function registerHudIpc({
     closeHudWindow()
 
     if (options?.returnToMain === true) {
+      // The macOS HUD is a non-activating panel, so Hermes is usually not the
+      // active app here, and focusing a window of an inactive app leaves it
+      // behind the frontmost one.
+      if (isMac) {
+        app.focus({ steal: true })
+      }
+
       returnToMain()
     }
 
     return { ok: true }
   })
 
+  // Parent for a native dialog. Dialogs are sheets on the main window, but
+  // while the macOS HUD has the keyboard Hermes is usually not the active app:
+  // that sheet would open behind whatever is frontmost, and a sheet on the HUD
+  // itself drags the HUD up the screen to make room. There the dialog stands
+  // alone and the app is activated so it lands in front; the main window
+  // stays where it is.
+  const dialogParent = <T>(mainWindow: T): null | T => {
+    const hudWindow = getHudWindow()
+
+    if (!isMac || !hudWindow || hudWindow.isDestroyed() || !hudWindow.isFocused()) {
+      return mainWindow
+    }
+
+    app.focus({ steal: true })
+
+    return null
+  }
+
   // Main re-applies the frost when the translucency SETTING changes, since the
   // band's own report only fires when the band itself moves.
-  return { applyHudFrost }
+  return { applyHudFrost, dialogParent }
 }

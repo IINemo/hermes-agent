@@ -8,6 +8,18 @@ interface HiddenAppWindow {
   hide(): void
 }
 
+/**
+ * The macOS popup is a non-activating panel. For an ordinary window Electron's
+ * `show()` activates the whole app, which makes Hermes frontmost and raises
+ * its main window over the app the popup was summoned from; for a panel
+ * `show()`/`focus()` hand over the keyboard and leave the frontmost app alone.
+ * Electron's panel is an NSWindow carrying the non-activating style mask, not
+ * an NSPanel, so it does not hide when Hermes deactivates.
+ */
+export function hudPopupWindowType(platform: string): 'panel' | undefined {
+  return platform === 'darwin' ? 'panel' : undefined
+}
+
 /** Hiding preserves the live chat, reading position, and native geometry. */
 export function dismissHudPopup(
   win: { isDestroyed(): boolean; hide(): void } | null,

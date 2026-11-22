@@ -1,6 +1,12 @@
 import { expect, it, vi } from 'vitest'
 
-import { createHudPopup, dismissHudPopup } from './hud-popup'
+import { createHudPopup, dismissHudPopup, hudPopupWindowType } from './hud-popup'
+
+it('makes only the macOS popup a non-activating panel, so a summon leaves the frontmost app alone', () => {
+  expect(hudPopupWindowType('darwin')).toBe('panel')
+  expect(hudPopupWindowType('win32')).toBeUndefined()
+  expect(hudPopupWindowType('linux')).toBeUndefined()
+})
 
 it('toggles the popup alone and does not reveal a cold window dismissed before first paint', () => {
   const win = { show: vi.fn(), focus: vi.fn(), hide: vi.fn(), isDestroyed: () => false }
