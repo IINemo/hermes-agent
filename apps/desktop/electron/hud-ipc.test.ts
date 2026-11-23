@@ -32,7 +32,10 @@ const hudWindow = (focused: boolean) => asHudWindow({ isDestroyed: () => false, 
 
 it('only returns to the main window for an explicit exit request', async () => {
   const calls: string[] = []
-  register({ closeHudWindow: () => calls.push('dismiss'), returnToMain: () => calls.push('main') })
+  register({
+    closeHudWindow: stayInHermes => calls.push(stayInHermes ? 'dismiss, staying in Hermes' : 'dismiss'),
+    returnToMain: () => calls.push('main')
+  })
   const close = closeHandler()
 
   expect(await close({})).toEqual({ ok: true })
@@ -40,7 +43,8 @@ it('only returns to the main window for an explicit exit request', async () => {
   calls.length = 0
 
   expect(await close({}, { returnToMain: true })).toEqual({ ok: true })
-  expect(calls).toEqual(['dismiss', 'main'])
+  // Exit HUD goes to the main window, so the keyboard is not handed back to another app.
+  expect(calls).toEqual(['dismiss, staying in Hermes', 'main'])
 })
 
 it('activates the app before an explicit exit hands over to the main window on macOS', async () => {

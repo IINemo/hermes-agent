@@ -325,7 +325,7 @@ import { applyHudResetBounds, defaultHudBounds } from './hud-geometry'
 import { registerHudIpc } from './hud-ipc'
 import { installHudModifierTap } from './hud-modifier'
 import { applyHudElectronOverlay, promoteHudOverlay } from './hud-overlay'
-import { createHudPopup, dismissHudPopup, hudPopupWindowType } from './hud-popup'
+import { createHudHandBack, createHudPopup, dismissHudPopup, hudPopupWindowType } from './hud-popup'
 import { installHudShortcut } from './hud-shortcut'
 import { snapHudBounds } from './hud-snap'
 import { createHudSnapShortcut } from './hud-snap-shortcut'
@@ -12750,8 +12750,7 @@ function spawnHudWindow(sessionId, profile) {
     minimizable: false,
     maximizable: false,
     fullscreenable: false,
-    // Windows/Linux keep the helper out of the taskbar/alt-tab list; macOS
-    // makes it a non-activating panel instead (see hudPopupWindowType).
+    // Off the taskbar/alt-tab list on Windows/Linux; a non-activating panel on macOS (hudPopupWindowType).
     skipTaskbar: !IS_MAC,
     hasShadow: false,
     alwaysOnTop: true,
@@ -12891,11 +12890,10 @@ function openHudWindow(sessionId, profile) {
     if (sessionId && sessionId !== hudSessionId) {
       hudSessionId = sessionId
       hudWindow.webContents.send('hermes:hud:goto', sessionId)
-      // Keep every window's idea of where the HUD is pointed in step, so the
-      // toggle keeps reading "switch" vs "dismiss" correctly.
-      broadcastHudState(true)
     }
 
+    // Keep every window's idea of where the HUD is pointed in step, so the
+    // toggle keeps reading "switch" vs "dismiss" correctly.
     broadcastHudState(true)
     hudPopup.reveal(hudWindow)
     registerHudSnapShortcut()
@@ -12912,8 +12910,9 @@ function openHudWindow(sessionId, profile) {
   return hudWindow
 }
 
-function closeHudWindow() {
+function closeHudWindow(stayInHermes = false) {
   dismissHudPopup(hudWindow, {
+    hide: win => hudPopup.hide(win, stayInHermes),
     clearWindow: () => {
       hudWindow = null
     },
@@ -12926,7 +12925,8 @@ const hudPopup = createHudPopup({
   open: () => openHudWindow(hudSessionId, hudProfile),
   dismiss: closeHudWindow,
   canToggle: () => !isQuittingForHandoff && !backendShutdown.hasStarted(),
-  getAppHiddenWindows: () => (IS_MAC && app.isHidden() ? BrowserWindow.getAllWindows() : [])
+  getAppHiddenWindows: () => (IS_MAC && app.isHidden() ? BrowserWindow.getAllWindows() : []),
+  handBack: createHudHandBack({ platform: process.platform, app })
 })
 
 // ── Quick Entry ─────────────────────────────────────────────────────────────

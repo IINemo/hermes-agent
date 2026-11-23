@@ -19,7 +19,8 @@ export interface HudIpcDeps {
   getTranslucencyState: () => TranslucencyState
   getHudWindow: () => BrowserWindow | null
   openHudWindow: (sessionId: null | string, profile: null | string) => void
-  closeHudWindow: () => void
+  /** `stayInHermes`: the main window takes over, so the keyboard is not handed back. */
+  closeHudWindow: (stayInHermes?: boolean) => void
   returnToMain: () => void
   resetHudLayout: () => boolean
   setHudSessionId: (sessionId: null | string) => void
@@ -294,9 +295,11 @@ export function registerHudIpc({
   })
 
   ipcMain.handle('hermes:hud:close', async (_event, options) => {
-    closeHudWindow()
+    const returning = options?.returnToMain === true
 
-    if (options?.returnToMain === true) {
+    closeHudWindow(returning)
+
+    if (returning) {
       // The macOS HUD is a non-activating panel, so Hermes is usually not the
       // active app here, and focusing a window of an inactive app leaves it
       // behind the frontmost one.
