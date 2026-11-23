@@ -258,6 +258,59 @@ describe('installSelectionCopyColorGuard', () => {
     }
   })
 
+  it("drops the HUD's white ink under a light theme, where it is the overlay's and not the theme's", () => {
+    document.documentElement.dataset.hermesMode = 'light'
+
+    const dispose = installSelectionCopyColorGuard(document)
+    const host = armSelection('<p style="color: rgb(255, 255, 255)">reply read over another app</p>')
+
+    host.setAttribute('data-hud-shell', '')
+
+    try {
+      const { event, setData, preventDefault } = makeCopyEvent()
+
+      document.body.dispatchEvent(event)
+
+      expect(preventDefault).toHaveBeenCalled()
+
+      const plainCall = setData.mock.calls.find(([type]) => type === 'text/plain')
+      const htmlCall = setData.mock.calls.find(([type]) => type === 'text/html')
+
+      expect(plainCall?.[1]).toContain('reply read over another app')
+      expect(htmlCall?.[1]).toContain('reply read over another app')
+      expect(htmlCall?.[1]).not.toContain('rgb(255, 255, 255)')
+    } finally {
+      dispose()
+      host.remove()
+    }
+  })
+
+  it('drops paint for a HUD selection that is mostly a theme-inked card, so its white prose cannot ride along', () => {
+    const dispose = installSelectionCopyColorGuard(document)
+
+    // One white line of prose and a card that brings the theme's dark ink:
+    // averaged, the selection scores as dark and would be left to Chromium.
+    const host = armSelection(
+      '<p style="color: rgb(255, 255, 255)">white prose</p>' +
+        '<pre><span style="color: rgb(17, 17, 17)">a</span><span style="color: rgb(17, 17, 17)">b</span>' +
+        '<span style="color: rgb(17, 17, 17)">c</span><span style="color: rgb(17, 17, 17)">d</span></pre>'
+    )
+
+    host.setAttribute('data-hud-shell', '')
+
+    try {
+      const { event, setData, preventDefault } = makeCopyEvent()
+
+      document.body.dispatchEvent(event)
+
+      expect(preventDefault).toHaveBeenCalled()
+      expect(setData.mock.calls.find(([type]) => type === 'text/html')?.[1]).not.toContain('rgb(')
+    } finally {
+      dispose()
+      host.remove()
+    }
+  })
+
   it('skips selections that start inside an editable field', () => {
     const dispose = installSelectionCopyColorGuard(document)
     const host = document.createElement('div')

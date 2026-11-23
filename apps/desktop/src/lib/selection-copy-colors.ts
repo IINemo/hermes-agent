@@ -255,25 +255,38 @@ export function serializeSelectionStructure(sel: Selection, doc: Document): stri
   return wrapper.outerHTML
 }
 
-function selectionStartsInEditable(sel: Selection): boolean {
+/**
+ * Surfaces that ink their text for a backdrop Hermes does not own. The HUD
+ * band is white over another app whatever the theme, so that ink is never
+ * the content's and cannot be scored against the theme: under a light theme
+ * its white reads as same-scheme and would be left on the clipboard. A copy
+ * from such a surface always drops paint.
+ */
+const OVERLAY_INK_SURFACE = '[data-hud-shell]'
+
+function selectionStartElement(sel: Selection): Element | null {
   const anchor = sel.anchorNode
 
   if (!anchor) {
-    return false
+    return null
   }
 
-  const el = anchor.nodeType === 1 ? (anchor as Element) : anchor.parentElement
+  return anchor.nodeType === 1 ? (anchor as Element) : anchor.parentElement
+}
 
-  return Boolean(el?.closest('input, textarea, [contenteditable="true"], [contenteditable=""]'))
+function selectionStartsInEditable(sel: Selection): boolean {
+  return Boolean(
+    selectionStartElement(sel)?.closest('input, textarea, [contenteditable="true"], [contenteditable=""]')
+  )
 }
 
 /**
  * Install the document-level `copy` interceptor. Returns a dispose function.
  *
  * Runs in the CAPTURE phase so inner handlers cannot run first. Only an
- * off-scheme selection is intercepted (payload owned and rewritten); every
- * other copy — same-scheme, editable-field, empty — passes through to
- * Chromium's default untouched.
+ * off-scheme selection, or one on an overlay-inked surface, is intercepted
+ * (payload owned and rewritten); every other copy — same-scheme,
+ * editable-field, empty — passes through to Chromium's default untouched.
  */
 export function installSelectionCopyColorGuard(doc: Document = document): () => void {
   const trace = (entry: Record<string, unknown>) => {
@@ -300,9 +313,10 @@ export function installSelectionCopyColorGuard(doc: Document = document): () => 
     }
 
     const mode = renderedMode(doc)
-    const inkLuma = selectionInkLuma(sel, doc)
+    const overlay = Boolean(selectionStartElement(sel)?.closest(OVERLAY_INK_SURFACE))
+    const inkLuma = overlay ? null : selectionInkLuma(sel, doc)
 
-    if (inkLuma === null || !isOppositeScheme(inkLuma, mode)) {
+    if (!overlay && (inkLuma === null || !isOppositeScheme(inkLuma, mode))) {
       trace({ step: inkLuma === null ? 'no-ink' : 'same-scheme', inkLuma, mode })
 
       return
@@ -323,7 +337,7 @@ export function installSelectionCopyColorGuard(doc: Document = document): () => 
     event.preventDefault()
     clipboard.setData('text/plain', plain)
     clipboard.setData('text/html', html)
-    trace({ step: 'owned-payload', mode, inkLuma, plainChars: plain.length, htmlChars: html.length })
+    trace({ step: 'owned-payload', mode, inkLuma, overlay, plainChars: plain.length, htmlChars: html.length })
   }
 
   doc.addEventListener('copy', onCopy, true)
