@@ -22,6 +22,21 @@ describe('web citation transport markers', () => {
     expect(preprocessMarkdown(input)).toBe('answer here and continues')
   })
 
+  it('strips OpenAI view IDs and mixed search/view lists from prose', () => {
+    const single = `${P.E200}cite${P.E202}turn415411view0${P.E201}`
+    const multiple = `${P.E200}cite${P.E202}turn415411view0${P.E202}turn396402view1${P.E202}turn0search2${P.E201}`
+    expect(preprocessMarkdown(`First.${single} Second.${multiple} [Source](https://example.com)`)).toBe(
+      'First. Second. [Source](https://example.com)'
+    )
+  })
+
+  it('strips a bare or still-streaming view marker and preserves quoted IDs', () => {
+    const streaming = `${P.E200}cite${P.E202}turn415411view0`
+    expect(preprocessMarkdown(`A citeturn415411view0. B.${streaming}`)).toBe('A . B.')
+    const quoted = ['`', streaming, P.E201, '`'].join('')
+    expect(preprocessMarkdown(`ID turn415411view0 and ${quoted}`)).toBe(`ID turn415411view0 and ${quoted}`)
+  })
+
   it('strips the no-delimiter shape inside a table cell', () => {
     // The reporter's table-cell case: the marker abuts a `|` cell wall.
     const input = `| Firm${P.E200}citeturn0search1${P.E201} | US |`

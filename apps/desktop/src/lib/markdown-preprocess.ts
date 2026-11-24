@@ -178,18 +178,13 @@ const SAFE_HTML_TAG_NAMES = new Set([
 
 const CITATION_MARKER_RE = /(?<=[\p{L}\p{N})\].,!?:;"'”’])\[(?:\d+(?:\s*,\s*\d+)*)\](?!\()/gu
 
-// Web-citation transport markers (Gemini-style grounding): private-use
-// delimiters U+E200/U+E201 wrap a `citeturn<n>search<m>` id list, with U+E202
-// separating ids — `\uE200citeturn0search11\uE202turn2search0\uE201`, or the
-// single-id `\uE200citeturn0search0\uE201`. The delimiters paint as
-// replacement glyphs (the reported "triple bars") and the ids are protocol
-// noise a reader cannot follow to a source (#120587). Strip the whole marker;
-// a marker that cannot be resolved is dropped, never invented into a link.
-// The bare no-delimiter alternative only fires with the `cite` head, so plain
-// prose can't trip it. Scoped to this shape: stray private-use characters
-// (icon fonts, user content) are left alone.
+// Web-citation transport markers wrap turn-local IDs in private-use
+// delimiters, for example \uE200cite\uE202turn415411view0\uE201. Search IDs
+// also occur without the first separator. These IDs carry no URL in the
+// transcript, so remove them from prose while preserving Markdown links.
+// The bare form requires the cite prefix to leave ordinary IDs alone.
 const CITATION_TRANSPORT_MARKER_RE =
-  /\uE200(?:cite)?(?:\uE202?turn\d+search\d+)+\uE201?|citeturn\d+search\d+(?:turn\d+search\d+)*/gu
+  /\uE200(?:cite)?(?:\uE202?turn\d+(?:search|view)\d+)+\uE201?|citeturn\d+(?:search|view)\d+(?:turn\d+(?:search|view)\d+)*/gu
 
 // The `Sources` section header the bundled grounded-citations skill renders —
 // `## Sources` (ATX, 1-6 hashes) or plain `Sources:`, case-insensitive,
