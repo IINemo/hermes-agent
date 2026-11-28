@@ -67,9 +67,9 @@ def test_portable_validation_fails_orphan_and_reports_availability(tmp_path: Pat
     )
     report = validate_plugin_dir(declared)
     assert any(
-        name == "server availability: worker" and ok and detail in {"missing_app", "unsupported_os"}
+        name == "server availability: worker" and ok and detail.split(", ", 1)[0] in {"missing_app", "unsupported_os"}
         for name, ok, detail in report.checks
-    )
+    ), report.checks
 
 
 BASE_MANIFEST = {
@@ -258,6 +258,39 @@ class TestCapabilityProbe:
         )
         report = validate_plugin_dir(d)
         assert report.ok, report.failures
+
+
+class TestExclusiveProviderProbe:
+    """Computer-use and cron-scheduler plugins register through their family's collector, not
+    PluginContext; the probe must accept that registrar and still refuse a misspelt one."""
+
+    @pytest.mark.parametrize("base,registrar", [
+        ("from tools.computer_use.backend import ComputerUseProvider as Base\n"
+         "class Provider(Base):\n"
+         "    name = 'fixture'\n"
+         "    def create_backend(self, *, permission_mode):\n"
+         "        raise NotImplementedError\n", "register_computer_use_provider"),
+        ("class Provider:\n    name = 'fixture'\n", "register_cron_scheduler"),
+    ])
+    def test_family_registrar_passes(self, tmp_path, base, registrar):
+        d = _make_plugin(
+            tmp_path,
+            manifest={**BASE_MANIFEST, "kind": "exclusive"},
+            init_py=base + f"def register(ctx):\n    ctx.{registrar}(Provider())\n",
+        )
+        report = validate_plugin_dir(d)
+        assert report.ok, report.failures
+        assert ("capability probe", True, "register() ran in isolation") in report.checks
+
+    def test_unknown_context_method_still_fails(self, tmp_path):
+        d = _make_plugin(
+            tmp_path,
+            manifest={**BASE_MANIFEST, "kind": "exclusive"},
+            init_py="def register(ctx):\n    ctx.register_computer_use_providre(object())\n",
+        )
+        report = validate_plugin_dir(d)
+        assert not report.ok
+        assert any("register() raised:" in f and "register_computer_use_providre" in f for f in report.failures)
 
 
 class TestModelProviderKind:
